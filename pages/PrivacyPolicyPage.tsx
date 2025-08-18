@@ -229,7 +229,7 @@ export function PrivacyPolicyPage() {
                     Your data is never sold to advertisers or marketers
                   </p>
                 </div>
-                <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark;border-red-800 rounded-lg">
                   <h4 className="font-medium text-red-800 dark:text-red-200 mb-1">Unnecessary Disclosure</h4>
                   <p className="text-sm text-red-600 dark:text-red-400">
                     Personal information beyond what's required for services
