@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';

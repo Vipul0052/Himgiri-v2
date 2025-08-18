@@ -132,10 +132,12 @@ export function ShopPage() {
 
   const handleAddToCart = (product: typeof allProducts[0]) => {
     addItem({
-      id: product.id,
+      id: product.id.toString(),
       name: product.name,
       image: product.image,
       price: product.price,
+      weight: '250g', // Default weight
+      category: product.category,
     });
     showToast(`${product.name} added to cart!`, 'success');
   };

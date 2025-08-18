@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test App</title>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module">
+        // Test if the app can be imported
+        try {
+            import('./dist/assets/index-DfBUPv22.js').then(() => {
+                console.log('App loaded successfully');
+            }).catch(error => {
+                console.error('Error loading app:', error);
+            });
+        } catch (error) {
+            console.error('Error importing app:', error);
+        }
+    </script>
+</body>
+</html>
