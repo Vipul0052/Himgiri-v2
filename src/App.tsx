@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { CartOverlay } from '../components/CartOverlay';
@@ -23,6 +23,10 @@ import { Analytics } from "@vercel/analytics/react";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [currentPage]);
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
