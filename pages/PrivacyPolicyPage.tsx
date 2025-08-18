@@ -363,37 +363,7 @@ export function PrivacyPolicyPage() {
         </CardContent>
       </Card>
 
-      {/* Contact Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Contact Us About Privacy</CardTitle>
-          <CardDescription>
-            Questions about this privacy policy or your data? We're here to help
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <Phone className="h-8 w-8 text-primary mx-auto mb-3" />
-              <h3 className="font-semibold mb-2">Customer Support</h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                General privacy questions
-              </p>
-              <p className="text-sm font-medium">+12898138506</p>
-            </div>
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="h-8 w-8 bg-accent text-accent-foreground rounded mx-auto mb-3 flex items-center justify-center">
-                <span className="text-sm font-bold">H</span>
-              </div>
-              <h3 className="font-semibold mb-2">Office Address</h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                Physical correspondence
-              </p>
-              <p className="text-sm font-medium">Sector 31, Gurgaon, India</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Contact section removed */}
     </div>
   );
 }
