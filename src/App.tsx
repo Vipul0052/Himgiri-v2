@@ -19,6 +19,7 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import { CartProvider } from '../contexts/CartContext';
 import { AuthProvider } from '../contexts/AuthContext';
 import { ToastProvider } from '../components/Toast';
+import { Analytics } from "@vercel/analytics/react";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -76,6 +77,7 @@ export default function App() {
           </ToastProvider>
         </CartProvider>
       </AuthProvider>
+      <Analytics />
     </ThemeProvider>
   );
 }
