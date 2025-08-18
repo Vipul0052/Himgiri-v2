@@ -374,14 +374,6 @@ export function PrivacyPolicyPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <Mail className="h-8 w-8 text-primary mx-auto mb-3" />
-              <h3 className="font-semibold mb-2">Privacy Officer</h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                Data protection inquiries
-              </p>
-              <p className="text-sm font-medium">privacy@himgirinaturals.com</p>
-            </div>
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
               <Phone className="h-8 w-8 text-primary mx-auto mb-3" />
               <h3 className="font-semibold mb-2">Customer Support</h3>
               <p className="text-sm text-muted-foreground mb-3">

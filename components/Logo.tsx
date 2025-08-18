@@ -1,4 +1,4 @@
-import { Mountain } from 'lucide-react';
+import { cn } from './ui/utils';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -29,38 +29,15 @@ export function Logo({ size = 'md', showText = true, className = '', onClick }: 
   const currentSize = sizeClasses[size];
 
   return (
-    <div 
-      className={`flex items-center space-x-2 cursor-pointer ${className}`}
+    <div
+      className={cn('flex items-center cursor-pointer', className)}
       onClick={onClick}
     >
-      {/* Logo Icon */}
-      <div className={`
-        ${currentSize.container} 
-        relative 
-        rounded-lg 
-        bg-gradient-to-br from-accent via-primary to-secondary 
-        flex items-center justify-center 
-        shadow-lg
-        group-hover:shadow-xl transition-all duration-300
-      `}>
-        <Mountain className={`${currentSize.icon} text-white drop-shadow-sm`} />
-        {/* Decorative accent */}
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full opacity-80"></div>
-      </div>
-      
-      {/* Company Name */}
-      {showText && (
-        <div className="flex flex-col">
-          <span className={`${currentSize.text} bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent`}>
-            Himgirinaturals
-          </span>
-          {size === 'lg' && (
-            <span className="text-xs text-muted-foreground tracking-wider">
-              HIMALAYAN NATURALS
-            </span>
-          )}
-        </div>
-      )}
+      <img
+        src="/logo-himgiri.svg"
+        alt="Himgirinaturals"
+        className={currentSize.container}
+      />
     </div>
   );
 }
