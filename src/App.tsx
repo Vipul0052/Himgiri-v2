@@ -22,10 +22,32 @@ import { ToastProvider } from '../components/Toast';
 import { Analytics } from "@vercel/analytics/react";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('home');
+  const [currentPage, setCurrentPage] = useState<string>(() => {
+    const hash = window.location.hash.replace('#', '').trim();
+    return hash || 'home';
+  });
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [currentPage]);
+
+  // Keep URL hash in sync and handle back/forward navigation
+  useEffect(() => {
+    const nextHash = `#${currentPage}`;
+    if (window.location.hash !== nextHash) {
+      window.history.replaceState(null, '', nextHash);
+    }
+  }, [currentPage]);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const hash = window.location.hash.replace('#', '').trim();
+      if (hash && hash !== currentPage) {
+        setCurrentPage(hash);
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
   }, [currentPage]);
 
   const handleNavigate = (page: string) => {
