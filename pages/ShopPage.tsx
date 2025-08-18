@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Input } from '../components/ui/input';
 import { ShoppingCart, Star, Search, Grid, List } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { useToast } from '../components/Toast';
 
 const allProducts = [
   {
@@ -105,6 +106,7 @@ export function ShopPage() {
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { addItem } = useCart();
+  const { showToast } = useToast();
 
   // Filter and sort products
   const filteredProducts = allProducts
@@ -135,6 +137,7 @@ export function ShopPage() {
       image: product.image,
       price: product.price,
     });
+    showToast(`${product.name} added to cart!`, 'success');
   };
 
   return (
