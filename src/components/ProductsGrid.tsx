@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useCart } from '../../contexts/CartContext';
-import { useToast } from '../Toast';
-import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
+import { useToast } from '../../components/Toast';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
 import { Star, ShoppingCart, Heart } from 'lucide-react';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 
 interface Product {
   id: string;
