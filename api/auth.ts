@@ -96,6 +96,7 @@ export default async function handler(req: any, res: any) {
       const { data: existingUser } = await supabase.from('users').select('id, email, name').eq('email', userData.email).maybeSingle()
       
       if (existingUser) {
+        console.log('Existing user found, logging in:', existingUser.email)
         const jwtSecret = process.env.AUTH_SECRET
         if (!jwtSecret) return res.status(500).json({ message: 'Server not configured' })
         const token = await new SignJWT({ sub: String(existingUser.id), email: existingUser.email, name: existingUser.name || '' })
@@ -104,8 +105,28 @@ export default async function handler(req: any, res: any) {
         // Redirect to home page with success message
         return res.redirect(`${authOrigin}/?login=success&provider=google`)
       } else {
-        // Redirect to home page with signup prompt
-        return res.redirect(`${authOrigin}/?signup=prompt&email=${encodeURIComponent(userData.email)}&name=${encodeURIComponent(userData.name || '')}`)
+        console.log('New user from Google, creating account:', userData.email)
+        // Create new user in Supabase
+        const { data: newUser, error: createError } = await supabase.from('users').insert([{
+          email: userData.email,
+          name: userData.name || userData.email.split('@')[0],
+          provider: 'google',
+          google_id: userData.id
+        }]).select('id, email, name').single()
+        
+        if (createError) {
+          console.error('Failed to create user:', createError)
+          return res.status(500).json({ message: 'Failed to create user account' })
+        }
+        
+        console.log('New user created successfully:', newUser)
+        const jwtSecret = process.env.AUTH_SECRET
+        if (!jwtSecret) return res.status(500).json({ message: 'Server not configured' })
+        const token = await new SignJWT({ sub: String(newUser.id), email: newUser.email, name: newUser.name || '' })
+          .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('7d').sign(new TextEncoder().encode(jwtSecret))
+        res.setHeader('Set-Cookie', `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}`)
+        // Redirect to home page with success message for new user
+        return res.redirect(`${authOrigin}/?login=success&provider=google&newuser=true`)
       }
     } catch (error) {
       console.error('Google OAuth error:', error)
@@ -201,6 +222,19 @@ export default async function handler(req: any, res: any) {
         
         const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}`
         return res.redirect(url)
+      }
+
+      case 'google.finish': {
+        // This handles the redirect from React app after OAuth
+        const { success, email, name, provider } = req.query || {}
+        if (success === 'true') {
+          return ok(res, { 
+            message: 'Google OAuth successful',
+            user: { email, name, provider }
+          })
+        } else {
+          return bad(res, 'Google OAuth failed')
+        }
       }
 
       default:
