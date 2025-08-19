@@ -167,9 +167,17 @@ export default async function handler(req: any, res: any) {
         const payload = req.body || {}
         const { email, amount, items } = payload
         if (!email || !amount || !Array.isArray(items)) return bad(res, 'Invalid payload')
-        const { error } = await supabase.from('orders').insert([payload])
-        if (error) return err(res, 'Failed to record order')
-        return ok(res, { ok: true })
+        
+        console.log('Creating order with payload:', JSON.stringify(payload, null, 2))
+        const { data, error } = await supabase.from('orders').insert([payload]).select()
+        
+        if (error) {
+          console.error('Order creation error:', error)
+          return err(res, 'Failed to record order', error.message)
+        }
+        
+        console.log('Order created successfully:', data)
+        return ok(res, { ok: true, order: data })
       }
 
       case 'ping':
