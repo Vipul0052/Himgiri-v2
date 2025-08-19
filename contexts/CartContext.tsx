@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
 
 export interface CartItem {
   id: string;
@@ -37,19 +38,30 @@ export const useCart = () => {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+
+  const storageKeyBase = 'himgiri_cart';
+  const storageKey = `${storageKeyBase}_${user ? user.id : 'guest'}`;
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('himgiri_cart');
+    const savedCart = localStorage.getItem(storageKey);
     if (savedCart) {
-      setItems(JSON.parse(savedCart));
+      try {
+        setItems(JSON.parse(savedCart));
+      } catch {
+        setItems([]);
+      }
+    } else {
+      setItems([]);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
 
   // Save cart to localStorage whenever items change
   useEffect(() => {
-    localStorage.setItem('himgiri_cart', JSON.stringify(items));
-  }, [items]);
+    localStorage.setItem(storageKey, JSON.stringify(items));
+  }, [items, storageKey]);
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
