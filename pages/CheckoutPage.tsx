@@ -36,11 +36,11 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
   const validateForm = () => ['fullName','email','phone','address','city','state','pincode'].every(f => shippingInfo[f as keyof typeof shippingInfo].trim() !== '');
 
   const createRazorpayOrder = async (amountPaise: number) => {
-    const resp = await fetch('/api/payments/razorpay/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: amountPaise }) })
+    const resp = await fetch('/api/app?action=rzp.order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: amountPaise }) })
     if (!resp.ok) throw new Error('Order create failed'); return resp.json();
   }
   const verifyRazorpay = async (payload: any) => {
-    const resp = await fetch('/api/payments/razorpay/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const resp = await fetch('/api/app?action=rzp.verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     return resp.ok;
   }
 

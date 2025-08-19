@@ -14,11 +14,7 @@ export function useNewsletter() {
     setIsLoading(true)
     
     try {
-      const resp = await fetch('/api/subscribe-newsletter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      })
+      const resp = await fetch('/api/app?action=newsletter.subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
 
       if (resp.status === 409) {
         showToast('This email is already subscribed!', 'info')
@@ -33,11 +29,7 @@ export function useNewsletter() {
       }
 
       // Fire-and-forget welcome email
-      fetch('/api/send-welcome-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      }).catch(() => {})
+      fetch('/api/app?action=email.welcome', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) }).catch(() => {})
 
       showToast('Successfully subscribed to newsletter!', 'success')
       return true
