@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const resp = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
+      const resp = await fetch('/api/auth?action=login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
       if (!resp.ok) return false
       const data = await resp.json()
       const logged: User = { id: String(data.user.id), name: data.user.name || email.split('@')[0], email, provider: 'email' }
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signup = async (name: string, email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const resp = await fetch('/api/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) })
+      const resp = await fetch('/api/auth?action=signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) })
       if (!resp.ok) return false
       return await login(email, password)
     } finally {
@@ -129,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const proto = window.location.protocol.replace(':','');
     const host = window.location.host;
     const origin = `${proto}://${host}`;
-    window.location.href = `${origin}/api/auth/google/start`;
+    window.location.href = `${origin}/api/auth?action=google.start`;
   };
 
   const loginWithGoogle = async (): Promise<boolean> => {
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const sendOtp = async (email: string): Promise<boolean> => {
     try {
-      const resp = await fetch('/api/auth/otp/send', {
+      const resp = await fetch('/api/auth?action=otp.send', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email })
       });
       return resp.ok;
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithOtp = async (email: string, code: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const resp = await fetch('/api/auth/otp/verify', {
+      const resp = await fetch('/api/auth?action=otp.verify', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, code })
       });
       if (!resp.ok) return false;
@@ -160,12 +160,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('himgiri_user', JSON.stringify(mockUser));
       return true;
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
   };
 
   const logout = () => {
-    fetch('/api/auth/logout').catch(() => {})
+    fetch('/api/auth?action=logout').catch(() => {})
     setUser(null);
     localStorage.removeItem('himgiri_user');
   };
