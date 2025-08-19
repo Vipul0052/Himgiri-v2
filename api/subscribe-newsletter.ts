@@ -22,7 +22,7 @@ export default async function handler(req: any, res: any) {
 
     const { error } = await supabase
       .from('newsletter')
-      .insert([{ email }])
+      .insert([{ email, created_at: new Date().toISOString() }])
 
     if (error) {
       // Handle Postgres unique violation (duplicate email)
