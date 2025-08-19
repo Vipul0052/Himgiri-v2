@@ -44,6 +44,45 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
     return resp.ok;
   }
 
+  const saveOrderToDatabase = async (orderData: any) => {
+    try {
+      const orderPayload = {
+        user_id: user?.id,
+        email: shippingInfo.email,
+        name: shippingInfo.fullName,
+        amount: orderData.total,
+        currency: 'INR',
+        items: orderData.items,
+        shipping: {
+          address: shippingInfo.address,
+          city: shippingInfo.city,
+          state: shippingInfo.state,
+          pincode: shippingInfo.pincode,
+          phone: shippingInfo.phone
+        },
+        status: orderData.status,
+        payment_method: paymentMethod,
+        created_at: new Date().toISOString()
+      };
+
+      const resp = await fetch('/api/app?action=orders.create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload)
+      });
+
+      if (!resp.ok) {
+        console.error('Failed to save order to database:', await resp.text());
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error saving order to database:', error);
+      return false;
+    }
+  };
+
   const handlePlaceOrder = async () => {
     if (!validateForm()) { showToast('Please fill in all required fields', 'error'); return; }
     if (items.length === 0) { showToast('Your cart is empty', 'error'); return; }
@@ -62,6 +101,13 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
             const ok = await verifyRazorpay(response);
             if (!ok) { showToast('Payment verification failed', 'error'); setIsProcessing(false); return; }
             const orderData = { total: finalTotal, status: 'pending' as const, items: items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price, image: i.image })) };
+            
+            // Save order to database
+            const dbSaved = await saveOrderToDatabase(orderData);
+            if (!dbSaved) {
+              showToast('Order placed but failed to save to database', 'warning');
+            }
+            
             if (user) addOrder(orderData); clearCart(); showToast('Payment successful! Order placed successfully.', 'success'); setTimeout(() => onNavigate(user ? 'orders' : 'home'), 1500); setIsProcessing(false);
           }
         };
@@ -73,6 +119,13 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
       // COD / UPI
       await new Promise(r => setTimeout(r, 800));
       const orderData = { total: finalTotal, status: 'pending' as const, items: items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price, image: i.image })) };
+      
+      // Save order to database
+      const dbSaved = await saveOrderToDatabase(orderData);
+      if (!dbSaved) {
+        showToast('Order placed but failed to save to database', 'warning');
+      }
+      
       if (user) addOrder(orderData); clearCart();
       showToast(paymentMethod === 'upi' ? 'Payment successful! Order placed successfully.' : 'Order placed successfully! Pay on delivery.', 'success');
       setTimeout(() => onNavigate(user ? 'orders' : 'home'), 1500);
