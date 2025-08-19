@@ -23,17 +23,18 @@ export default async function handler(req: any, res: any) {
     })
 
     const { error } = await supabase
-      .from('public.newsletter')
+      .from('newsletter')
       .insert([{ email }])
 
     if (error) {
       const code = (error as any).code
       const msg = String((error as any).message || '')
-      console.error('Supabase insert error:', { code, msg })
+      const hint = (error as any).hint
+      console.error('Supabase insert error:', { code, msg, hint })
       if (code === '23505' || msg.toLowerCase().includes('duplicate')) {
         return res.status(409).json({ message: 'This email is already subscribed' })
       }
-      return res.status(500).json({ message: 'Failed to subscribe', details: msg })
+      return res.status(500).json({ message: 'Failed to subscribe', details: msg, hint })
     }
 
     return res.status(200).json({ message: 'Subscribed successfully' })
