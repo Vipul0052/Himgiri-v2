@@ -17,6 +17,12 @@ export default async function handler(req: any, res: any) {
     const valid = digest === razorpay_signature
 
     if (!valid) return res.status(400).json({ ok: false, message: 'Invalid signature' })
+    // Optionally record payment immediately
+    try {
+      await fetch(`${(process.env.AUTH_ORIGIN||'')}/api/orders/create`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req.body)
+      })
+    } catch {}
     return res.status(200).json({ ok: true })
   } catch (e) {
     console.error('Razorpay verify error:', e)
