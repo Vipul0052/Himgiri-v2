@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 
 export function useNewsletter() {
@@ -15,17 +14,21 @@ export function useNewsletter() {
     setIsLoading(true)
     
     try {
-      const { error } = await supabase
-        .from('newsletter')
-        .insert([{ email }])
+      const resp = await fetch('/api/subscribe-newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
 
-      if (error) {
-        if (error.code === '23505') { // Unique constraint violation
-          showToast('This email is already subscribed!', 'info')
-        } else {
-          console.error('Newsletter subscription error:', error)
-          showToast('Failed to subscribe. Please try again.', 'error')
-        }
+      if (resp.status === 409) {
+        showToast('This email is already subscribed!', 'info')
+        return false
+      }
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => null)
+        console.error('Newsletter subscription error:', data)
+        showToast('Failed to subscribe. Please try again.', 'error')
         return false
       }
 

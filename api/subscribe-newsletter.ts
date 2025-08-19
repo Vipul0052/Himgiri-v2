@@ -1,0 +1,42 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { createClient } from '@supabase/supabase-js'
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' })
+  }
+
+  try {
+    const { email } = req.body as { email?: string }
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ message: 'Valid email is required' })
+    }
+
+    const supabaseUrl = process.env.SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      return res.status(500).json({ message: 'Server not configured' })
+    }
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey)
+
+    const { error } = await supabase
+      .from('newsletter')
+      .insert([{ email }])
+
+    if (error) {
+      if ((error as any).code === '23505') {
+        return res.status(409).json({ message: 'This email is already subscribed' })
+      }
+      console.error('Supabase insert error:', error)
+      return res.status(500).json({ message: 'Failed to subscribe' })
+    }
+
+    return res.status(200).json({ message: 'Subscribed successfully' })
+  } catch (err) {
+    console.error('Unexpected error:', err)
+    return res.status(500).json({ message: 'Failed to subscribe' })
+  }
+}
+
