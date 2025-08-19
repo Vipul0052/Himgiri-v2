@@ -12,7 +12,8 @@ export default async function handler(req: any, res: any) {
     const host = req.headers['x-forwarded-host'] || req.headers.host
     const proto = (req.headers['x-forwarded-proto'] || 'https') as string
     const origin = `${proto}://${host}`
-    const redirectUri = `${origin}/api/auth/google/callback`
+    const base = process.env.AUTH_ORIGIN || origin
+    const redirectUri = `${base}/api/auth/google/callback`
 
     // Exchange code for tokens
     const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
