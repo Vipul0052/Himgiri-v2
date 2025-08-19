@@ -23,7 +23,7 @@ export default async function handler(req: any, res: any) {
     })
 
     const { error } = await supabase
-      .from('"Newsletter"')
+      .from('Newsletter')
       .insert([{ email, created_at: new Date().toISOString() }])
 
     if (error) {
@@ -43,4 +43,3 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ message: 'Failed to subscribe' })
   }
 }
-
