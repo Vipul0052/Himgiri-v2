@@ -18,19 +18,22 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ message: 'Server not configured' })
     }
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey)
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    })
 
     const { error } = await supabase
-      .from('newsletter')
-      .insert([{ email, created_at: new Date().toISOString() }])
+      .from('public.newsletter')
+      .insert([{ email }])
 
     if (error) {
-      // Handle Postgres unique violation (duplicate email)
-      if ((error as any).code === '23505' || String((error as any).message || '').toLowerCase().includes('duplicate')) {
+      const code = (error as any).code
+      const msg = String((error as any).message || '')
+      console.error('Supabase insert error:', { code, msg })
+      if (code === '23505' || msg.toLowerCase().includes('duplicate')) {
         return res.status(409).json({ message: 'This email is already subscribed' })
       }
-      console.error('Supabase insert error:', error)
-      return res.status(500).json({ message: 'Failed to subscribe', details: (error as any).message || String(error) })
+      return res.status(500).json({ message: 'Failed to subscribe', details: msg })
     }
 
     return res.status(200).json({ message: 'Subscribed successfully' })
