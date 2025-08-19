@@ -91,40 +91,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const mockUser: User = {
-      id: '1',
-      name: 'John Doe',
-      email,
-      provider: 'email'
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem('himgiri_user', JSON.stringify(mockUser));
-    setIsLoading(false);
-    return true;
+    try {
+      const resp = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
+      if (!resp.ok) return false
+      const data = await resp.json()
+      const logged: User = { id: String(data.user.id), name: data.user.name || email.split('@')[0], email, provider: 'email' }
+      setUser(logged)
+      localStorage.setItem('himgiri_user', JSON.stringify(logged))
+      return true
+    } finally {
+      setIsLoading(false)
+    }
   };
 
   const signup = async (name: string, email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const mockUser: User = {
-      id: Math.random().toString(36).substring(7),
-      name,
-      email,
-      provider: 'email'
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem('himgiri_user', JSON.stringify(mockUser));
-    setIsLoading(false);
-    return true;
+    try {
+      const resp = await fetch('/api/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) })
+      if (!resp.ok) return false
+      return await login(email, password)
+    } finally {
+      setIsLoading(false)
+    }
   };
 
   const startGoogleLogin = () => {
@@ -167,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    fetch('/api/auth/logout').catch(() => {})
     setUser(null);
     localStorage.removeItem('himgiri_user');
   };
