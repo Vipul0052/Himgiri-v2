@@ -32,6 +32,13 @@ export function useNewsletter() {
         return false
       }
 
+      // Fire-and-forget welcome email
+      fetch('/api/send-welcome-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      }).catch(() => {})
+
       showToast('Successfully subscribed to newsletter!', 'success')
       return true
     } catch (error) {
