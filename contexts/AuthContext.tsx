@@ -28,6 +28,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   signup: (name: string, email: string, password: string) => Promise<boolean>;
   loginWithGoogle: () => Promise<boolean>;
+  startGoogleLogin: () => void;
+  loginWithOtp: (email: string, code: string) => Promise<boolean>;
+  sendOtp: (email: string) => Promise<boolean>;
   logout: () => void;
   orders: Order[];
   addOrder: (order: Omit<Order, 'id' | 'date'>) => void;
@@ -47,6 +50,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    // Handle Google finish redirect payload
+    if (window.location.hash.startsWith('#login-success=')) {
+      try {
+        const payload = decodeURIComponent(window.location.hash.replace('#login-success=',''))
+        const data = JSON.parse(payload)
+        if (data?.email) {
+          const mockUser: User = {
+            id: 'google_' + Math.random().toString(36).substring(7),
+            name: String(data.name || data.email.split('@')[0]),
+            email: String(data.email),
+            avatar: String(data.avatar || ''),
+            provider: 'google'
+          }
+          setUser(mockUser)
+          localStorage.setItem('himgiri_user', JSON.stringify(mockUser))
+          window.history.replaceState(null, '', window.location.pathname + window.location.search)
+        }
+      } catch {}
+    }
+  }, [])
 
   useEffect(() => {
     // Check for stored auth data on mount
@@ -70,7 +95,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Mock successful login
     const mockUser: User = {
       id: '1',
       name: 'John Doe',
@@ -90,7 +114,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Mock successful signup
     const mockUser: User = {
       id: Math.random().toString(36).substring(7),
       name,
@@ -104,25 +127,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
+  const startGoogleLogin = () => {
+    const proto = window.location.protocol.replace(':','');
+    const host = window.location.host;
+    const origin = `${proto}://${host}`;
+    window.location.href = `${origin}/api/auth/google/start`;
+  };
+
   const loginWithGoogle = async (): Promise<boolean> => {
-    setIsLoading(true);
-    
-    // Simulate Google OAuth
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Mock successful Google login
-    const mockUser: User = {
-      id: 'google_' + Math.random().toString(36).substring(7),
-      name: 'John Doe',
-      email: 'john.doe@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face',
-      provider: 'google'
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem('himgiri_user', JSON.stringify(mockUser));
-    setIsLoading(false);
+    startGoogleLogin();
     return true;
+  };
+
+  const sendOtp = async (email: string): Promise<boolean> => {
+    try {
+      const resp = await fetch('/api/auth/otp/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email })
+      });
+      return resp.ok;
+    } catch {
+      return false;
+    }
+  };
+
+  const loginWithOtp = async (email: string, code: string): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const resp = await fetch('/api/auth/otp/verify', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, code })
+      });
+      if (!resp.ok) return false;
+      const mockUser: User = { id: 'otp_' + Math.random().toString(36).substring(7), name: email.split('@')[0], email, provider: 'email' };
+      setUser(mockUser);
+      localStorage.setItem('himgiri_user', JSON.stringify(mockUser));
+      return true;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = () => {
@@ -149,6 +190,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       signup,
       loginWithGoogle,
+      startGoogleLogin,
+      loginWithOtp,
+      sendOtp,
       logout,
       orders,
       addOrder
