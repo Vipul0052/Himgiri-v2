@@ -26,8 +26,8 @@ export function useNewsletter() {
       }
 
       if (!resp.ok) {
-        const data = await resp.json().catch(() => null)
-        console.error('Newsletter subscription error:', data)
+        const text = await resp.text().catch(() => '')
+        console.error('Newsletter subscription error:', text)
         showToast('Failed to subscribe. Please try again.', 'error')
         return false
       }
