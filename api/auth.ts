@@ -95,9 +95,20 @@ export default async function handler(req: any, res: any) {
     }
   }
   
-  // Regular action-based routing
+  // If no action provided, show available actions
   const action = (req.query?.action || req.body?.action || '').toString()
-  if (!action) return bad(res, 'Missing action')
+  if (!action) {
+    return res.status(200).json({ 
+      message: "Himgiri Naturals Auth API",
+      available_actions: [
+        "signup", "login", "logout", 
+        "otp.send", "otp.verify", 
+        "google.start"
+      ],
+      usage: "Add ?action=ACTION_NAME to use this endpoint",
+      example: "/api/auth?action=google.start"
+    })
+  }
   
   try {
     switch (action) {
