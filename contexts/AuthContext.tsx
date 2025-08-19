@@ -51,6 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
 
+  const ordersStorageBase = 'himgiri_orders'
+  const ordersStorageKey = `${ordersStorageBase}_${user ? user.id : 'guest'}`
+
   useEffect(() => {
     // Handle Google finish redirect payload
     if (window.location.hash.startsWith('#login-success=')) {
@@ -76,18 +79,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Check for stored auth data on mount
     const storedUser = localStorage.getItem('himgiri_user');
-    const storedOrders = localStorage.getItem('himgiri_orders');
-    
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
-    
-    if (storedOrders) {
-      setOrders(JSON.parse(storedOrders));
-    }
-    
     setIsLoading(false);
   }, []);
+
+  // Load orders whenever the active user changes
+  useEffect(() => {
+    const storedOrders = localStorage.getItem(ordersStorageKey)
+    if (storedOrders) {
+      try {
+        setOrders(JSON.parse(storedOrders))
+      } catch {
+        setOrders([])
+      }
+    } else {
+      setOrders([])
+    }
+  }, [ordersStorageKey])
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
@@ -169,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const updatedOrders = [newOrder, ...orders];
     setOrders(updatedOrders);
-    localStorage.setItem('himgiri_orders', JSON.stringify(updatedOrders));
+    localStorage.setItem(ordersStorageKey, JSON.stringify(updatedOrders));
   };
 
   return (
