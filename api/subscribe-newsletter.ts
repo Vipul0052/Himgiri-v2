@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { error } = await supabase
       .from('newsletter')
-      .insert([{ email, created_on: new Date().toISOString() }])
+      .insert([{ email }])
 
     if (error) {
       // Handle Postgres unique violation (duplicate email)
@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(409).json({ message: 'This email is already subscribed' })
       }
       console.error('Supabase insert error:', error)
-      return res.status(500).json({ message: 'Failed to subscribe' })
+      return res.status(500).json({ message: 'Failed to subscribe', details: (error as any).message || String(error) })
     }
 
     return res.status(200).json({ message: 'Subscribed successfully' })
