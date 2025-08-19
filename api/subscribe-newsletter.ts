@@ -23,8 +23,8 @@ export default async function handler(req: any, res: any) {
     })
 
     const { error } = await supabase
-      .from('newsletter')
-      .insert([{ email }])
+      .from('"Newsletter"')
+      .insert([{ email, created_at: new Date().toISOString() }])
 
     if (error) {
       const code = (error as any).code
