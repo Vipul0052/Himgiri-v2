@@ -106,17 +106,20 @@ export default async function handler(req: any, res: any) {
         return res.redirect(`${authOrigin}/?login=success&provider=google`)
       } else {
         console.log('New user from Google, creating account:', userData.email)
-        // Create new user in Supabase
+        // Create new user in Supabase with basic fields
         const { data: newUser, error: createError } = await supabase.from('users').insert([{
           email: userData.email,
-          name: userData.name || userData.email.split('@')[0],
-          provider: 'google',
-          google_id: userData.id
+          name: userData.name || userData.email.split('@')[0]
         }]).select('id, email, name').single()
         
         if (createError) {
           console.error('Failed to create user:', createError)
-          return res.status(500).json({ message: 'Failed to create user account' })
+          console.error('Error details:', JSON.stringify(createError, null, 2))
+          return res.status(500).json({ 
+            message: 'Failed to create user account', 
+            error: createError.message,
+            details: createError
+          })
         }
         
         console.log('New user created successfully:', newUser)
