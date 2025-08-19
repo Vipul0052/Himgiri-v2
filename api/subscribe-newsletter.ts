@@ -23,10 +23,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { error } = await supabase
       .from('newsletter')
-      .insert([{ email }])
+      .insert([{ email, created_on: new Date().toISOString() }])
 
     if (error) {
-      if ((error as any).code === '23505') {
+      // Handle Postgres unique violation (duplicate email)
+      if ((error as any).code === '23505' || String((error as any).message || '').toLowerCase().includes('duplicate')) {
         return res.status(409).json({ message: 'This email is already subscribed' })
       }
       console.error('Supabase insert error:', error)
