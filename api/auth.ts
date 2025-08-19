@@ -32,15 +32,31 @@ function bad(res: any, msg: string) { res.status(400).json({ message: msg }) }
 function err(res: any, msg: string, details?: any) { res.status(500).json({ message: msg, details }) }
 
 export default async function handler(req: any, res: any) {
+  console.log('Auth API called:', { 
+    method: req.method, 
+    url: req.url, 
+    query: req.query, 
+    hasCode: !!req.query?.code,
+    hasState: !!req.query?.state 
+  })
+  
   // Check if this is a Google OAuth callback (has code parameter)
   if (req.query?.code && req.query?.state) {
+    console.log('Processing Google OAuth callback')
     // This is a Google OAuth callback, handle it directly
     const { code, state } = req.query
     const clientId = process.env.GOOGLE_CLIENT_ID
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET
     const authOrigin = process.env.AUTH_ORIGIN
     
+    console.log('OAuth config check:', { 
+      hasClientId: !!clientId, 
+      hasClientSecret: !!clientSecret, 
+      authOrigin 
+    })
+    
     if (!clientId || !clientSecret || !authOrigin) {
+      console.error('OAuth not configured:', { clientId: !!clientId, clientSecret: !!clientSecret, authOrigin })
       return res.status(500).json({ message: 'Google OAuth not configured' })
     }
     
@@ -85,9 +101,11 @@ export default async function handler(req: any, res: any) {
         const token = await new SignJWT({ sub: String(existingUser.id), email: existingUser.email, name: existingUser.name || '' })
           .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('7d').sign(new TextEncoder().encode(jwtSecret))
         res.setHeader('Set-Cookie', `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}`)
-        return res.redirect(`${authOrigin}/auth?action=google.finish&success=true`)
+        // Redirect to home page with success message
+        return res.redirect(`${authOrigin}/?login=success&provider=google`)
       } else {
-        return res.redirect(`${authOrigin}/auth?action=google.finish&success=false&email=${encodeURIComponent(userData.email)}&name=${encodeURIComponent(userData.name || '')}`)
+        // Redirect to home page with signup prompt
+        return res.redirect(`${authOrigin}/?signup=prompt&email=${encodeURIComponent(userData.email)}&name=${encodeURIComponent(userData.name || '')}`)
       }
     } catch (error) {
       console.error('Google OAuth error:', error)
