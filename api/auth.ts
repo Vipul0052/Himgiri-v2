@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer'
 import bcrypt from 'bcryptjs'
 import { SignJWT } from 'jose'
 import crypto from 'crypto'
+import { jwtVerify } from 'jose'
 
 declare global {
   // eslint-disable-next-line no-var
@@ -237,6 +238,37 @@ export default async function handler(req: any, res: any) {
           })
         } else {
           return bad(res, 'Google OAuth failed')
+        }
+      }
+
+      case 'check-auth': {
+        // Check if user is authenticated from cookie
+        const cookies = req.headers.cookie || ''
+        const sessionCookie = cookies.split(';').find(c => c.trim().startsWith(`${COOKIE_NAME}=`))
+        
+        if (!sessionCookie) {
+          return res.status(401).json({ message: 'Not authenticated' })
+        }
+        
+        try {
+          const token = sessionCookie.split('=')[1]
+          const jwtSecret = process.env.AUTH_SECRET
+          if (!jwtSecret) return res.status(500).json({ message: 'Server not configured' })
+          
+          // Verify and decode JWT token
+          const { payload } = await jwtVerify(token, new TextEncoder().encode(jwtSecret))
+          
+          return ok(res, { 
+            user: {
+              id: payload.sub,
+              email: payload.email,
+              name: payload.name,
+              provider: 'google'
+            }
+          })
+        } catch (error) {
+          console.error('JWT verification failed:', error)
+          return res.status(401).json({ message: 'Invalid token' })
         }
       }
 

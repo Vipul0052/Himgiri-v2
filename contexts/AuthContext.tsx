@@ -82,8 +82,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+    
+    // Also check server-side authentication (for Google OAuth cookies)
+    checkServerAuth();
     setIsLoading(false);
   }, []);
+
+  const checkServerAuth = async () => {
+    try {
+      const resp = await fetch('/api/auth?action=check-auth', { 
+        method: 'GET',
+        credentials: 'include' // Include cookies
+      });
+      
+      if (resp.ok) {
+        const data = await resp.json();
+        const serverUser: User = {
+          id: String(data.user.id),
+          name: data.user.name || data.user.email.split('@')[0],
+          email: data.user.email,
+          provider: data.user.provider || 'google'
+        };
+        setUser(serverUser);
+        localStorage.setItem('himgiri_user', JSON.stringify(serverUser));
+      }
+    } catch (error) {
+      console.log('Server auth check failed:', error);
+    }
+  };
 
   // Load orders whenever the active user changes
   useEffect(() => {
