@@ -38,6 +38,16 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
     }
   }, []);
   
+  // Check localStorage for signup tab flag (from checkout page)
+  useEffect(() => {
+    const shouldOpenSignup = localStorage.getItem('himgiri_open_signup_tab');
+    if (shouldOpenSignup === 'true') {
+      setDefaultTab('signup');
+      // Clear the flag after using it
+      localStorage.removeItem('himgiri_open_signup_tab');
+    }
+  }, []);
+  
   // Listen for custom event to open signup tab (from checkout page)
   useEffect(() => {
     const handleOpenSignupTab = () => {

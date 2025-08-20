@@ -33,7 +33,14 @@ export function CartPage({ onNavigate }: CartPageProps) {
           <Button onClick={() => onNavigate('login')} className="w-full">
             Login to Continue
           </Button>
-          <Button variant="outline" onClick={() => onNavigate('signup')} className="w-full">
+          <Button variant="outline" onClick={() => {
+            // Set return URL to cart
+            setReturnUrl('cart');
+            // Set a flag in localStorage to open signup tab
+            localStorage.setItem('himgiri_open_signup_tab', 'true');
+            // Navigate to login page
+            onNavigate('login');
+          }} className="w-full">
             Create New Account
           </Button>
           <Button variant="ghost" onClick={() => onNavigate('shop')} className="w-full">

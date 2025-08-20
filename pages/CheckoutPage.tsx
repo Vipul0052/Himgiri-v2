@@ -38,13 +38,12 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
             Login to Continue
           </Button>
           <Button variant="outline" onClick={() => {
-            // Navigate to login page and set return URL to checkout
+            // Set return URL to checkout
             setReturnUrl('checkout');
+            // Set a flag in localStorage to open signup tab
+            localStorage.setItem('himgiri_open_signup_tab', 'true');
+            // Navigate to login page
             onNavigate('login');
-            // We'll use a custom event to signal the login page to open signup tab
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('openSignupTab'));
-            }, 100);
           }} className="w-full">
             Create New Account
           </Button>
