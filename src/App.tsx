@@ -15,6 +15,8 @@ import { ShippingInfoPage } from '../pages/ShippingInfoPage';
 import { ReturnsRefundsPage } from '../pages/ReturnsRefundsPage';
 import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from '../pages/TermsOfServicePage';
+import { UserDashboardPage } from '../pages/UserDashboardPage';
+import { WishlistPage } from '../pages/WishlistPage';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { CartProvider } from '../contexts/CartContext';
 import { AuthProvider } from '../contexts/AuthContext';
@@ -56,6 +58,10 @@ export default function App() {
         return <PrivacyPolicyPage />;
       case 'terms-of-service':
         return <TermsOfServicePage />;
+      case 'dashboard':
+        return <UserDashboardPage onNavigate={handleNavigate} />;
+      case 'wishlist':
+        return <WishlistPage onNavigate={handleNavigate} />;
       default:
         return <HomePage onNavigate={handleNavigate} />;
     }

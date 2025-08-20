@@ -110,6 +110,14 @@ export function Header({ currentPage, onNavigate }: HeaderProps) {
                       <ShoppingCart className="mr-2 h-4 w-4" />
                       My Cart
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onNavigate('dashboard')}>
+                      <User className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onNavigate('wishlist')}>
+                      <Heart className="mr-2 h-4 w-4" />
+                      Wishlist
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
