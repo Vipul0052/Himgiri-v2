@@ -456,9 +456,169 @@ export default async function handler(req: any, res: any) {
         const { user_id } = req.query || {}
         if (!user_id) return bad(res, 'User ID required')
         
-        const { data, error } = await supabase.from('reviews').select('*').eq('user_id', user_id).order('created_at', { ascending: false })
-        if (error) return err(res, 'Failed to fetch user reviews')
+        const { data, error } = await supabase
+          .from('reviews')
+          .select(`
+            id, product_id, rating, comment, images, helpful_votes, created_at,
+            products!inner(name as product_name, image as product_image)
+          `)
+          .eq('user_id', user_id)
+          .order('created_at', { ascending: false })
+        
+        if (error) {
+          console.error('Failed to fetch user reviews:', error)
+          return err(res, 'Failed to fetch reviews')
+        }
+        
         return ok(res, { reviews: data })
+      }
+
+      // User Profile Management
+      case 'user.profile': {
+        const supabase = getSupabase()
+        const { user_id } = req.query || {}
+        if (!user_id) return bad(res, 'User ID required')
+        
+        const { data, error } = await supabase
+          .from('users')
+          .select(`
+            id, name, email, phone, created_at,
+            addresses(id, type, full_name, phone, address, city, state, pincode, is_default),
+            communication_preferences
+          `)
+          .eq('id', user_id)
+          .single()
+        
+        if (error) {
+          console.error('Failed to fetch user profile:', error)
+          return err(res, 'Failed to fetch profile')
+        }
+        
+        return ok(res, { profile: data })
+      }
+
+      case 'user.update-profile': {
+        const supabase = getSupabase()
+        const { user_id, name, phone, communication_preferences } = req.body || {}
+        if (!user_id) return bad(res, 'User ID required')
+        
+        const updateData: any = {}
+        if (name !== undefined) updateData.name = name
+        if (phone !== undefined) updateData.phone = phone
+        if (communication_preferences !== undefined) updateData.communication_preferences = communication_preferences
+        
+        const { data, error } = await supabase
+          .from('users')
+          .update(updateData)
+          .eq('id', user_id)
+          .select()
+          .single()
+        
+        if (error) {
+          console.error('Failed to update user profile:', error)
+          return err(res, 'Failed to update profile')
+        }
+        
+        return ok(res, { profile: data })
+      }
+
+      case 'user.add-address': {
+        const supabase = getSupabase()
+        const { user_id, type, full_name, phone, address, city, state, pincode, is_default } = req.body || {}
+        if (!user_id || !full_name || !phone || !address || !city || !state || !pincode) {
+          return bad(res, 'All address fields are required')
+        }
+        
+        // If this is the first address or marked as default, set it as default
+        if (is_default) {
+          // Remove default from other addresses
+          await supabase
+            .from('user_addresses')
+            .update({ is_default: false })
+            .eq('user_id', user_id)
+        }
+        
+        const { data, error } = await supabase
+          .from('user_addresses')
+          .insert([{
+            user_id,
+            type,
+            full_name,
+            phone,
+            address,
+            city,
+            state,
+            pincode,
+            is_default: is_default || false
+          }])
+          .select()
+          .single()
+        
+        if (error) {
+          console.error('Failed to add address:', error)
+          return err(res, 'Failed to add address')
+        }
+        
+        return ok(res, { address: data })
+      }
+
+      case 'user.update-address': {
+        const supabase = getSupabase()
+        const { address_id, user_id, type, full_name, phone, address, city, state, pincode, is_default } = req.body || {}
+        if (!address_id || !user_id) return bad(res, 'Address ID and User ID required')
+        
+        const updateData: any = {}
+        if (type !== undefined) updateData.type = type
+        if (full_name !== undefined) updateData.full_name = full_name
+        if (phone !== undefined) updateData.phone = phone
+        if (address !== undefined) updateData.address = address
+        if (city !== undefined) updateData.city = city
+        if (state !== undefined) updateData.state = state
+        if (pincode !== undefined) updateData.pincode = pincode
+        if (is_default !== undefined) updateData.is_default = is_default
+        
+        // If setting as default, remove default from other addresses
+        if (is_default) {
+          await supabase
+            .from('user_addresses')
+            .update({ is_default: false })
+            .eq('user_id', user_id)
+            .neq('id', address_id)
+        }
+        
+        const { data, error } = await supabase
+          .from('user_addresses')
+          .update(updateData)
+          .eq('id', address_id)
+          .eq('user_id', user_id)
+          .select()
+          .single()
+        
+        if (error) {
+          console.error('Failed to update address:', error)
+          return err(res, 'Failed to update address')
+        }
+        
+        return ok(res, { address: data })
+      }
+
+      case 'user.delete-address': {
+        const supabase = getSupabase()
+        const { address_id, user_id } = req.body || {}
+        if (!address_id || !user_id) return bad(res, 'Address ID and User ID required')
+        
+        const { error } = await supabase
+          .from('user_addresses')
+          .delete()
+          .eq('id', address_id)
+          .eq('user_id', user_id)
+        
+        if (error) {
+          console.error('Failed to delete address:', error)
+          return err(res, 'Failed to delete address')
+        }
+        
+        return ok(res, { success: true })
       }
 
       case 'ping':
