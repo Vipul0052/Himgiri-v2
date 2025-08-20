@@ -38,8 +38,13 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
             Login to Continue
           </Button>
           <Button variant="outline" onClick={() => {
-            // Navigate to login page with signup tab open
-            window.location.href = `${window.location.origin}/?page=login&tab=signup`;
+            // Navigate to login page and set return URL to checkout
+            setReturnUrl('checkout');
+            onNavigate('login');
+            // We'll use a custom event to signal the login page to open signup tab
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('openSignupTab'));
+            }, 100);
           }} className="w-full">
             Create New Account
           </Button>

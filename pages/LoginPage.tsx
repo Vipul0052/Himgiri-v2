@@ -37,6 +37,19 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       setDefaultTab('signup');
     }
   }, []);
+  
+  // Listen for custom event to open signup tab (from checkout page)
+  useEffect(() => {
+    const handleOpenSignupTab = () => {
+      setDefaultTab('signup');
+    };
+    
+    window.addEventListener('openSignupTab', handleOpenSignupTab);
+    
+    return () => {
+      window.removeEventListener('openSignupTab', handleOpenSignupTab);
+    };
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
