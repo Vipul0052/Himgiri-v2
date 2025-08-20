@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { Button } from '../components/ui/button';
@@ -26,6 +26,17 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
   const [verificationMode, setVerificationMode] = useState(false);
   const [verificationData, setVerificationData] = useState({ userId: '', code: '' });
   const [verificationCode, setVerificationCode] = useState('');
+  
+  // Check if we should open signup tab (from checkout page)
+  const [defaultTab, setDefaultTab] = useState<'login' | 'signup'>('login');
+  
+  // Check URL parameters on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('tab') === 'signup') {
+      setDefaultTab('signup');
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -245,7 +256,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
             <p className="text-muted-foreground">Sign in to your account or create a new one</p>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>

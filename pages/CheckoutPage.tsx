@@ -37,7 +37,10 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
           <Button onClick={() => onNavigate('login')} className="w-full">
             Login to Continue
           </Button>
-          <Button variant="outline" onClick={() => onNavigate('signup')} className="w-full">
+          <Button variant="outline" onClick={() => {
+            // Navigate to login page with signup tab open
+            window.location.href = `${window.location.origin}/?page=login&tab=signup`;
+          }} className="w-full">
             Create New Account
           </Button>
           <Button variant="ghost" onClick={() => onNavigate('shop')} className="w-full">

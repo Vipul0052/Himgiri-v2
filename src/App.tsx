@@ -26,8 +26,22 @@ import { Analytics } from "@vercel/analytics/react";
 export default function App() {
   const [currentPage, setCurrentPage] = useState<string>('home');
 
+  // Check URL parameters on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pageParam = urlParams.get('page');
+    if (pageParam && ['home', 'shop', 'about', 'login', 'cart', 'checkout', 'orders', 'bulk-orders', 'faq', 'shipping-info', 'returns-refunds', 'privacy-policy', 'terms-of-service', 'dashboard', 'wishlist'].includes(pageParam)) {
+      setCurrentPage(pageParam);
+    }
+  }, []);
+
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
+    // Update URL without page parameter to avoid conflicts
+    const url = new URL(window.location.href);
+    url.searchParams.delete('page');
+    url.searchParams.delete('tab');
+    window.history.replaceState({}, '', url.toString());
   };
 
   const renderPage = () => {
