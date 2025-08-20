@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
@@ -60,8 +60,50 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
   const [shippingInfo, setShippingInfo] = useState({
     fullName: user?.name || '',
     email: user?.email || '',
-    phone: '', address: '', city: '', state: '', pincode: ''
+    phone: '', address: '', city: '', state: '', pincode: '', saveAddress: false
   });
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  
+  // Load saved addresses when component mounts
+  useEffect(() => {
+    if (user) {
+      loadSavedAddresses();
+    }
+  }, [user]);
+
+  const loadSavedAddresses = async () => {
+    if (!user) return;
+    
+    try {
+      const resp = await fetch(`/api/app?action=user.profile&user_id=${user.id}`);
+      if (resp.ok) {
+        const profileData = await resp.json();
+        if (profileData.profile?.addresses) {
+          setSavedAddresses(profileData.profile.addresses);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load saved addresses:', error);
+    }
+  };
+
+  const handleSavedAddressSelect = (addressId: string) => {
+    if (!addressId) return;
+    
+    const selectedAddress = savedAddresses.find(addr => addr.id === addressId);
+    if (selectedAddress) {
+      setShippingInfo(prev => ({
+        ...prev,
+        fullName: selectedAddress.full_name,
+        phone: selectedAddress.phone,
+        address: selectedAddress.address,
+        city: selectedAddress.city,
+        state: selectedAddress.state,
+        pincode: selectedAddress.pincode,
+        saveAddress: false // Don't save an already saved address
+      }));
+    }
+  };
 
   const deliveryFee = total > 999 ? 0 : 50;
   const finalTotal = total + deliveryFee;
@@ -111,8 +153,11 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
         return false;
       }
 
-      // After successful order creation, refresh the orders list
+      // After successful order creation, save address to user's address book
       if (user) {
+        if (shippingInfo.saveAddress) {
+          await saveAddressToUserBook();
+        }
         // Trigger a refresh of user orders
         window.dispatchEvent(new CustomEvent('refreshUserOrders'));
       }
@@ -121,6 +166,60 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
     } catch (error) {
       console.error('Error saving order to database:', error);
       return false;
+    }
+  };
+
+  // Function to save checkout address to user's address book
+  const saveAddressToUserBook = async () => {
+    if (!user) return;
+    
+    try {
+      // Check if this address already exists
+      const existingAddressesResp = await fetch(`/api/app?action=user.profile&user_id=${user.id}`);
+      if (existingAddressesResp.ok) {
+        const profileData = await existingAddressesResp.json();
+        const existingAddresses = profileData.profile?.addresses || [];
+        
+        // Check if this exact address already exists
+        const addressExists = existingAddresses.some((addr: any) => 
+          addr.address === shippingInfo.address &&
+          addr.city === shippingInfo.city &&
+          addr.state === shippingInfo.state &&
+          addr.pincode === shippingInfo.pincode &&
+          addr.phone === shippingInfo.phone
+        );
+        
+        if (!addressExists) {
+          // Save new address to user's address book
+          const addressPayload = {
+            user_id: user.id,
+            type: 'home', // Default type for checkout addresses
+            full_name: shippingInfo.fullName,
+            phone: shippingInfo.phone,
+            address: shippingInfo.address,
+            city: shippingInfo.city,
+            state: shippingInfo.state,
+            pincode: shippingInfo.pincode,
+            is_default: existingAddresses.length === 0 // Make default if it's the first address
+          };
+          
+          const addressResp = await fetch('/api/app?action=user.add-address', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(addressPayload)
+          });
+          
+          if (addressResp.ok) {
+            console.log('Checkout address saved to user address book');
+            showToast('Address saved to your address book for future orders!', 'success');
+          } else {
+            console.error('Failed to save address to address book');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error saving address to address book:', error);
+      // Don't fail the order if address saving fails
     }
   };
 
@@ -205,6 +304,26 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
                 <CardTitle className="flex items-center gap-2"><MapPin className="w-5 h-5" /> Shipping Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Saved Addresses Dropdown */}
+                {user && (
+                  <div>
+                    <Label htmlFor="savedAddresses">Use Saved Address</Label>
+                    <select
+                      id="savedAddresses"
+                      onChange={(e) => handleSavedAddressSelect(e.target.value)}
+                      className="w-full p-2 border rounded-md"
+                      defaultValue=""
+                    >
+                      <option value="">Select a saved address or fill manually</option>
+                      {savedAddresses.map((addr) => (
+                        <option key={addr.id} value={addr.id}>
+                          {addr.type} - {addr.full_name} - {addr.address}, {addr.city}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="fullName">Full Name *</Label>
@@ -237,6 +356,22 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
                     <Input id="pincode" value={shippingInfo.pincode} onChange={(e) => handleInputChange('pincode', e.target.value)} placeholder="110001" />
                   </div>
                 </div>
+                
+                {/* Save Address Option */}
+                {user && (
+                  <div className="flex items-center space-x-2 pt-2">
+                    <input
+                      type="checkbox"
+                      id="saveAddress"
+                      checked={shippingInfo.saveAddress}
+                      onChange={(e) => handleInputChange('saveAddress', e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    <Label htmlFor="saveAddress" className="text-sm">
+                      Save this address to my address book for future orders
+                    </Label>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
