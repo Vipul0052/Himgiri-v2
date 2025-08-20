@@ -159,30 +159,160 @@ export default async function handler(req: any, res: any) {
       case 'signup': {
         const { name = '', email, password } = req.body || {}
         if (!email || !password) return bad(res, 'Email and password required')
+        
+        // Check if user already exists
         const supabase = getSupabase()
-        const password_hash = await bcrypt.hash(password, 10)
-        const { error } = await supabase.from('users').insert([{ email, password_hash, name }])
-        if (error) {
-          if ((error as any).code === '23505') return res.status(409).json({ message: 'Email already exists' })
-          return err(res, 'Signup failed')
+        const { data: existingUser } = await supabase.from('users').select('id').eq('email', email).maybeSingle()
+        if (existingUser) {
+          return res.status(409).json({ message: 'Email already exists. Please login instead.' })
         }
-        return ok(res, { ok: true })
+        
+        // Generate verification code
+        const verificationCode = Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)).join('')
+        const verificationExpiry = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+        
+        // Hash password and create user with verification status
+        const password_hash = await bcrypt.hash(password, 10)
+        const { data: newUser, error: createError } = await supabase.from('users').insert([{ 
+          email, 
+          password_hash, 
+          name,
+          email_verified: false,
+          verification_code: verificationCode,
+          verification_expires: verificationExpiry.toISOString()
+        }]).select('id, email, name').single()
+        
+        if (createError) {
+          console.error('User creation error:', createError)
+          return err(res, 'Failed to create account')
+        }
+        
+        // Send verification email
+        try {
+          const { transporter, smtpFrom } = getMailer()
+          const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #2d5a27; margin: 0;">🌿 Himgiri Naturals</h1>
+              </div>
+              <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
+                <h2 style="color: #2d5a27; margin-bottom: 20px;">Verify Your Email Address</h2>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Hello ${name},</p>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Thank you for signing up with Himgiri Naturals! Please use the verification code below to complete your registration:</p>
+                <div style="background-color: #2d5a27; color: white; padding: 20px; border-radius: 8px; font-size: 24px; font-weight: bold; letter-spacing: 4px; margin: 20px 0;">
+                  ${verificationCode}
+                </div>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">This code will expire in 10 minutes.</p>
+                <p style="color: #555; line-height: 1.6;">If you didn't create this account, please ignore this email.</p>
+              </div>
+              <div style="text-align: center; margin-top: 30px; color: #888; font-size: 14px;">
+                <p>© 2025 Himgiri Naturals. All rights reserved.</p>
+              </div>
+            </div>`
+          
+          await transporter.sendMail({
+            from: smtpFrom,
+            to: email,
+            subject: 'Verify Your Email - Himgiri Naturals',
+            html
+          })
+          
+          return ok(res, { 
+            message: 'Account created! Please check your email for verification code.',
+            requiresVerification: true,
+            userId: newUser.id
+          })
+        } catch (emailError) {
+          console.error('Verification email failed:', emailError)
+          // Delete the user if email fails
+          await supabase.from('users').delete().eq('id', newUser.id)
+          return err(res, 'Account creation failed - email service error')
+        }
+      }
+
+      case 'verify-email': {
+        const { userId, code } = req.body || {}
+        if (!userId || !code) return bad(res, 'User ID and verification code required')
+        
+        const supabase = getSupabase()
+        const { data: user, error: fetchError } = await supabase.from('users')
+          .select('id, email, name, verification_code, verification_expires')
+          .eq('id', userId)
+          .maybeSingle()
+        
+        if (fetchError || !user) return err(res, 'User not found')
+        
+        // Check if code matches and hasn't expired
+        if (user.verification_code !== code) {
+          return res.status(400).json({ message: 'Invalid verification code' })
+        }
+        
+        if (new Date(user.verification_expires) < new Date()) {
+          return res.status(400).json({ message: 'Verification code has expired' })
+        }
+        
+        // Mark email as verified and clear verification data
+        const { error: updateError } = await supabase.from('users')
+          .update({ 
+            email_verified: true, 
+            verification_code: null, 
+            verification_expires: null 
+          })
+          .eq('id', userId)
+        
+        if (updateError) return err(res, 'Failed to verify email')
+        
+        return ok(res, { message: 'Email verified successfully! You can now login.' })
       }
 
       case 'login': {
         const { email, password } = req.body || {}
         if (!email || !password) return bad(res, 'Email and password required')
+        
         const supabase = getSupabase()
-        const { data, error } = await supabase.from('users').select('id, email, name, password_hash').eq('email', email).maybeSingle()
-        if (error || !data) return res.status(401).json({ message: 'Invalid credentials' })
+        const { data, error } = await supabase.from('users')
+          .select('id, email, name, password_hash, email_verified')
+          .eq('email', email)
+          .maybeSingle()
+        
+        if (error || !data) {
+          return res.status(401).json({ message: 'Invalid email or password' })
+        }
+        
+        // Check if email is verified
+        if (!data.email_verified) {
+          return res.status(403).json({ 
+            message: 'Please verify your email before logging in. Check your inbox for the verification code.',
+            requiresVerification: true,
+            userId: data.id
+          })
+        }
+        
+        // Verify password
         const okPwd = await bcrypt.compare(password, (data as any).password_hash)
-        if (!okPwd) return res.status(401).json({ message: 'Invalid credentials' })
+        if (!okPwd) {
+          return res.status(401).json({ message: 'Invalid email or password' })
+        }
+        
+        // Create JWT token
         const jwtSecret = process.env.AUTH_SECRET
         if (!jwtSecret) return err(res, 'Server not configured')
-        const token = await new SignJWT({ sub: String(data.id), email: data.email, name: data.name || '' })
-          .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('7d').sign(new TextEncoder().encode(jwtSecret))
+        
+        const token = await new SignJWT({ 
+          sub: String(data.id), 
+          email: data.email, 
+          name: data.name || '' 
+        })
+          .setProtectedHeader({ alg: 'HS256' })
+          .setIssuedAt()
+          .setExpirationTime('7d')
+          .sign(new TextEncoder().encode(jwtSecret))
+        
         res.setHeader('Set-Cookie', `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}`)
-        return ok(res, { ok: true, user: { id: data.id, email: data.email, name: data.name } })
+        return ok(res, { 
+          ok: true, 
+          user: { id: data.id, email: data.email, name: data.name } 
+        })
       }
 
       case 'logout': {

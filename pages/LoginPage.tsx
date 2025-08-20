@@ -7,7 +7,7 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Separator } from '../components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { ArrowLeft, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, CheckCircle } from 'lucide-react';
 
 interface LoginPageProps {
   onNavigate: (page: string) => void;
@@ -21,6 +21,11 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
   const [signupForm, setSignupForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Email verification state
+  const [verificationMode, setVerificationMode] = useState(false);
+  const [verificationData, setVerificationData] = useState({ userId: '', code: '' });
+  const [verificationCode, setVerificationCode] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,23 +75,75 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
     }
 
     try {
-      const success = await signup(signupForm.name, signupForm.email, signupForm.password);
-      if (success) {
-        showToast('Account created successfully! Welcome aboard!', 'success');
-        
-        // Check if there's a return URL
-        const returnUrl = getReturnUrl();
-        if (returnUrl) {
-          clearReturnUrl();
-          onNavigate(returnUrl);
+      const response = await fetch('/api/auth?action=signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: signupForm.name,
+          email: signupForm.email,
+          password: signupForm.password
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        if (data.requiresVerification) {
+          showToast('Account created! Please check your email for verification code.', 'success');
+          // Store verification data and switch to verification mode
+          setVerificationData({ userId: data.userId, code: '' });
+          setVerificationMode(true);
         } else {
-          onNavigate('home');
+          showToast('Account created successfully! Welcome aboard!', 'success');
+          // Check if there's a return URL
+          const returnUrl = getReturnUrl();
+          if (returnUrl) {
+            clearReturnUrl();
+            onNavigate(returnUrl);
+          } else {
+            onNavigate('home');
+          }
         }
       } else {
-        showToast('Signup failed. Please try again.', 'error');
+        showToast(data.message || 'Signup failed. Please try again.', 'error');
       }
     } catch (error) {
       showToast('Signup failed. Please try again.', 'error');
+    }
+  };
+
+  const handleEmailVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!verificationCode) {
+      showToast('Please enter the verification code', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth?action=verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: verificationData.userId,
+          code: verificationCode
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        showToast('Email verified successfully! You can now login.', 'success');
+        setVerificationMode(false);
+        setVerificationCode('');
+        // Switch to login tab
+        const loginTab = document.querySelector('[value="login"]') as HTMLElement;
+        if (loginTab) loginTab.click();
+      } else {
+        showToast(data.message || 'Verification failed', 'error');
+      }
+    } catch (error) {
+      showToast('Verification failed. Please try again.', 'error');
     }
   };
 
@@ -109,6 +166,63 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       showToast('Google login failed. Please try again.', 'error');
     }
   };
+
+  // If in verification mode, show verification form
+  if (verificationMode) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="mb-6">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setVerificationMode(false)}
+              className="flex items-center gap-2 mb-4"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Sign Up
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader className="text-center">
+              <CardTitle>Verify Your Email</CardTitle>
+              <p className="text-muted-foreground">Enter the 6-digit code sent to your email</p>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleEmailVerification} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="verificationCode">Verification Code</Label>
+                  <div className="relative">
+                    <CheckCircle className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="verificationCode"
+                      type="text"
+                      placeholder="Enter 6-digit code"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                      className="pl-10 text-center text-lg tracking-widest"
+                      maxLength={6}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Verifying...' : 'Verify Email'}
+                </Button>
+                
+                <div className="text-center text-sm text-muted-foreground">
+                  <p>Didn't receive the code? Check your spam folder.</p>
+                  <p>The code expires in 10 minutes.</p>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

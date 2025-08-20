@@ -98,7 +98,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ name, email, password }) 
       });
-      if (!resp.ok) return false;
+      
+      if (!resp.ok) {
+        const errorData = await resp.json();
+        console.error('Signup error:', errorData);
+        return false;
+      }
+      
+      const data = await resp.json();
+      console.log('Signup response:', data);
+      
+      // If verification is required, return true to show verification form
+      if (data.requiresVerification) {
+        return true;
+      }
+      
+      // If no verification needed, proceed to login
       return await login(email, password);
     } catch (error) {
       console.error('Signup error:', error);
