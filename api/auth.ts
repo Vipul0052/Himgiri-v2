@@ -103,6 +103,47 @@ export default async function handler(req: any, res: any) {
         const token = await new SignJWT({ sub: String(existingUser.id), email: existingUser.email, name: existingUser.name || '' })
           .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('7d').sign(new TextEncoder().encode(jwtSecret))
         res.setHeader('Set-Cookie', `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}`)
+        
+        // Send login welcome message for Google OAuth login
+        try {
+          console.log('Attempting to send Google OAuth login welcome email to:', existingUser.email)
+          const { transporter, smtpFrom } = getMailer()
+          console.log('Mailer configured successfully for Google OAuth, smtpFrom:', smtpFrom)
+          
+          const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #2d5a27; margin: 0;">🌿 Himgiri Naturals</h1>
+              </div>
+              <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
+                <h2 style="color: #2d5a27; margin-bottom: 20px;">Welcome Back! 🌿</h2>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Hello ${existingUser.name || existingUser.email.split('@')[0]},</p>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">🎉 Great to see you again!</p>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">You've successfully logged into your Himgiri Naturals account via Google.</p>
+                <div style="background-color: #2d5a27; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <p style="margin: 0; font-weight: bold;">Ready to shop for premium Himalayan dry fruits and nuts!</p>
+                </div>
+                <p style="color: #555; line-height: 1.6;">Thank you for choosing Himgiri Naturals!</p>
+              </div>
+              <div style="text-align: center; margin-top: 30px; color: #888; font-size: 14px;">
+                <p>© 2025 Himgiri Naturals. All rights reserved.</p>
+              </div>
+            </div>`
+          
+          console.log('Sending Google OAuth login email with transporter...')
+          await transporter.sendMail({
+            from: smtpFrom,
+            to: existingUser.email,
+            subject: 'Welcome Back - Himgiri Naturals 🌿',
+            html
+          })
+          
+          console.log('Google OAuth login welcome email sent successfully to:', existingUser.email)
+        } catch (emailError) {
+          console.error('Google OAuth login welcome email failed:', emailError)
+          // Don't fail the login if welcome email fails
+        }
+        
         // Redirect to home page with success message
         return res.redirect(`${authOrigin}/?login=success&provider=google`)
       } else {
@@ -129,6 +170,47 @@ export default async function handler(req: any, res: any) {
         const token = await new SignJWT({ sub: String(newUser.id), email: newUser.email, name: newUser.name || '' })
           .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('7d').sign(new TextEncoder().encode(jwtSecret))
         res.setHeader('Set-Cookie', `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}`)
+        
+        // Send welcome message for new Google OAuth user
+        try {
+          console.log('Attempting to send new Google OAuth user welcome email to:', newUser.email)
+          const { transporter, smtpFrom } = getMailer()
+          console.log('Mailer configured successfully for new Google OAuth user, smtpFrom:', smtpFrom)
+          
+          const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #2d5a27; margin: 0;">🌿 Himgiri Naturals</h1>
+              </div>
+              <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
+                <h2 style="color: #2d5a27; margin-bottom: 20px;">Welcome to Himgiri Naturals! 🌿</h2>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Hello ${newUser.name || newUser.email.split('@')[0]},</p>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">🎉 Welcome to the Himgiri Naturals family!</p>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Your account has been successfully created and you're now logged in via Google.</p>
+                <div style="background-color: #2d5a27; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <p style="margin: 0; font-weight: bold;">Ready to explore premium Himalayan dry fruits and nuts!</p>
+                </div>
+                <p style="color: #555; line-height: 1.6;">Thank you for choosing Himgiri Naturals!</p>
+              </div>
+              <div style="text-align: center; margin-top: 30px; color: #888; font-size: 14px;">
+                <p>© 2025 Himgiri Naturals. All rights reserved.</p>
+              </div>
+            </div>`
+          
+          console.log('Sending new Google OAuth user welcome email with transporter...')
+          await transporter.sendMail({
+            from: smtpFrom,
+            to: newUser.email,
+            subject: 'Welcome to Himgiri Naturals! 🌿',
+            html
+          })
+          
+          console.log('New Google OAuth user welcome email sent successfully to:', newUser.email)
+        } catch (emailError) {
+          console.error('New Google OAuth user welcome email failed:', emailError)
+          // Don't fail the login if welcome email fails
+        }
+        
         // Redirect to home page with success message for new user
         return res.redirect(`${authOrigin}/?login=success&provider=google&newuser=true`)
       }
