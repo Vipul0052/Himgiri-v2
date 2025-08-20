@@ -13,11 +13,13 @@ interface CartPageProps {
 
 export function CartPage({ onNavigate }: CartPageProps) {
   const { items, total, updateQuantity, removeItem } = useCart();
-  const { user } = useAuth();
+  const { user, setReturnUrl } = useAuth();
   const { showToast } = useToast();
   
   // Check if user is logged in
   if (!user) {
+    // Set return URL to cart before redirecting to login
+    setReturnUrl('cart');
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
         <div className="mb-6">

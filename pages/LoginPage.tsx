@@ -14,7 +14,7 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onNavigate }: LoginPageProps) {
-  const { login, signup, loginWithGoogle, isLoading } = useAuth();
+  const { login, signup, loginWithGoogle, isLoading, getReturnUrl, clearReturnUrl } = useAuth();
   const { showToast } = useToast();
   
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -34,7 +34,15 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       const success = await login(loginForm.email, loginForm.password);
       if (success) {
         showToast('Welcome back!', 'success');
-        onNavigate('home');
+        
+        // Check if there's a return URL
+        const returnUrl = getReturnUrl();
+        if (returnUrl) {
+          clearReturnUrl();
+          onNavigate(returnUrl);
+        } else {
+          onNavigate('home');
+        }
       } else {
         showToast('Invalid email or password', 'error');
       }
@@ -65,7 +73,15 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       const success = await signup(signupForm.name, signupForm.email, signupForm.password);
       if (success) {
         showToast('Account created successfully! Welcome aboard!', 'success');
-        onNavigate('home');
+        
+        // Check if there's a return URL
+        const returnUrl = getReturnUrl();
+        if (returnUrl) {
+          clearReturnUrl();
+          onNavigate(returnUrl);
+        } else {
+          onNavigate('home');
+        }
       } else {
         showToast('Signup failed. Please try again.', 'error');
       }
@@ -76,12 +92,18 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
 
   const handleGoogleLogin = async () => {
     try {
-      const success = await loginWithGoogle();
-      if (success) {
-        showToast('Welcome! Signed in with Google.', 'success');
-        onNavigate('home');
+      // Get return URL before redirecting
+      const returnUrl = getReturnUrl();
+      
+      // Redirect to Google OAuth with return URL in state
+      const proto = window.location.protocol.replace(':','');
+      const host = window.location.host;
+      const origin = `${proto}://${host}`;
+      
+      if (returnUrl) {
+        window.location.href = `${origin}/api/auth?action=google.start&returnUrl=${encodeURIComponent(returnUrl)}`;
       } else {
-        showToast('Google login failed. Please try again.', 'error');
+        window.location.href = `${origin}/api/auth?action=google.start`;
       }
     } catch (error) {
       showToast('Google login failed. Please try again.', 'error');

@@ -17,11 +17,13 @@ declare global { interface Window { Razorpay?: any; } }
 
 export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
   const { items, total, clearCart } = useCart();
-  const { user, addOrder } = useAuth();
+  const { user, addOrder, setReturnUrl } = useAuth();
   const { showToast } = useToast();
   
   // Check if user is logged in
   if (!user) {
+    // Set return URL to checkout before redirecting to login
+    setReturnUrl('checkout');
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
         <div className="mb-6">

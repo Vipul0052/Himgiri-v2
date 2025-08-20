@@ -34,6 +34,9 @@ interface AuthContextType {
   logout: () => void;
   orders: Order[];
   addOrder: (order: Omit<Order, 'id' | 'date'>) => void;
+  setReturnUrl: (url: string) => void;
+  getReturnUrl: () => string | null;
+  clearReturnUrl: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -208,6 +211,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(ordersStorageKey, JSON.stringify(updatedOrders));
   };
 
+  // Return URL management
+  const setReturnUrl = (url: string) => {
+    localStorage.setItem('himgiri_return_url', url);
+  };
+
+  const getReturnUrl = (): string | null => {
+    return localStorage.getItem('himgiri_return_url');
+  };
+
+  const clearReturnUrl = () => {
+    localStorage.removeItem('himgiri_return_url');
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -220,7 +236,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sendOtp,
       logout,
       orders,
-      addOrder
+      addOrder,
+      setReturnUrl,
+      getReturnUrl,
+      clearReturnUrl
     }}>
       {children}
     </AuthContext.Provider>
