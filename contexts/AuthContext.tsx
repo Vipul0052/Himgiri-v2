@@ -51,106 +51,58 @@ export const useAuth = () => {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
-
-  const ordersStorageBase = 'himgiri_orders'
-  const ordersStorageKey = `${ordersStorageBase}_${user ? user.id : 'guest'}`
-
-  useEffect(() => {
-    // Handle Google finish redirect payload
-    if (window.location.hash.startsWith('#login-success=')) {
-      try {
-        const payload = decodeURIComponent(window.location.hash.replace('#login-success=',''))
-        const data = JSON.parse(payload)
-        if (data?.email) {
-          const mockUser: User = {
-            id: 'google_' + Math.random().toString(36).substring(7),
-            name: String(data.name || data.email.split('@')[0]),
-            email: String(data.email),
-            avatar: String(data.avatar || ''),
-            provider: 'google'
-          }
-          setUser(mockUser)
-          localStorage.setItem('himgiri_user', JSON.stringify(mockUser))
-          window.history.replaceState(null, '', window.location.pathname + window.location.search)
-        }
-      } catch {}
-    }
-  }, [])
 
   useEffect(() => {
     // Check for stored auth data on mount
     const storedUser = localStorage.getItem('himgiri_user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Failed to parse stored user:', error);
+      }
     }
-    
-    // Also check server-side authentication (for Google OAuth cookies)
-    checkServerAuth();
     setIsLoading(false);
   }, []);
 
-  const checkServerAuth = async () => {
-    try {
-      const resp = await fetch('/api/auth?action=check-auth', { 
-        method: 'GET',
-        credentials: 'include' // Include cookies
-      });
-      
-      if (resp.ok) {
-        const data = await resp.json();
-        const serverUser: User = {
-          id: String(data.user.id),
-          name: data.user.name || data.user.email.split('@')[0],
-          email: data.user.email,
-          provider: data.user.provider || 'google'
-        };
-        setUser(serverUser);
-        localStorage.setItem('himgiri_user', JSON.stringify(serverUser));
-      }
-    } catch (error) {
-      console.log('Server auth check failed:', error);
-    }
-  };
-
-  // Load orders whenever the active user changes
-  useEffect(() => {
-    const storedOrders = localStorage.getItem(ordersStorageKey)
-    if (storedOrders) {
-      try {
-        setOrders(JSON.parse(storedOrders))
-      } catch {
-        setOrders([])
-      }
-    } else {
-      setOrders([])
-    }
-  }, [ordersStorageKey])
-
   const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
     try {
-      const resp = await fetch('/api/auth?action=login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
-      if (!resp.ok) return false
-      const data = await resp.json()
-      const logged: User = { id: String(data.user.id), name: data.user.name || email.split('@')[0], email, provider: 'email' }
-      setUser(logged)
-      localStorage.setItem('himgiri_user', JSON.stringify(logged))
-      return true
-    } finally {
-      setIsLoading(false)
+      const resp = await fetch('/api/auth?action=login', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ email, password }) 
+      });
+      if (!resp.ok) return false;
+      const data = await resp.json();
+      const logged: User = { 
+        id: String(data.user.id), 
+        name: data.user.name || email.split('@')[0], 
+        email, 
+        provider: 'email' 
+      };
+      setUser(logged);
+      localStorage.setItem('himgiri_user', JSON.stringify(logged));
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
   };
 
   const signup = async (name: string, email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
     try {
-      const resp = await fetch('/api/auth?action=signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) })
-      if (!resp.ok) return false
-      return await login(email, password)
-    } finally {
-      setIsLoading(false)
+      const resp = await fetch('/api/auth?action=signup', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ name, email, password }) 
+      });
+      if (!resp.ok) return false;
+      return await login(email, password);
+    } catch (error) {
+      console.error('Signup error:', error);
+      return false;
     }
   };
 
@@ -169,32 +121,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const sendOtp = async (email: string): Promise<boolean> => {
     try {
       const resp = await fetch('/api/auth?action=otp.send', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email })
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ email })
       });
       return resp.ok;
-    } catch {
+    } catch (error) {
+      console.error('Send OTP error:', error);
       return false;
     }
   };
 
   const loginWithOtp = async (email: string, code: string): Promise<boolean> => {
-    setIsLoading(true);
     try {
       const resp = await fetch('/api/auth?action=otp.verify', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, code })
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ email, code })
       });
       if (!resp.ok) return false;
-      const mockUser: User = { id: 'otp_' + Math.random().toString(36).substring(7), name: email.split('@')[0], email, provider: 'email' };
+      const mockUser: User = { 
+        id: 'otp_' + Math.random().toString(36).substring(7), 
+        name: email.split('@')[0], 
+        email, 
+        provider: 'email' 
+      };
       setUser(mockUser);
       localStorage.setItem('himgiri_user', JSON.stringify(mockUser));
       return true;
-    } finally {
-      setIsLoading(false)
+    } catch (error) {
+      console.error('Verify OTP error:', error);
+      return false;
     }
   };
 
   const logout = () => {
-    fetch('/api/auth?action=logout').catch(() => {})
     setUser(null);
     localStorage.removeItem('himgiri_user');
   };
@@ -208,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const updatedOrders = [newOrder, ...orders];
     setOrders(updatedOrders);
-    localStorage.setItem(ordersStorageKey, JSON.stringify(updatedOrders));
+    localStorage.setItem('himgiri_orders', JSON.stringify(updatedOrders));
   };
 
   // Return URL management
