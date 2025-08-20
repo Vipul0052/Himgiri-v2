@@ -221,41 +221,97 @@ export default async function handler(req: any, res: any) {
         try {
           const { transporter, smtpFrom } = getMailer()
           const orderItems = items.map((item: any) => 
-            `<li>${item.name} - ₹${item.price} x ${item.quantity}</li>`
+            `<li style="margin-bottom: 10px; padding: 10px; background-color: #f9f9f9; border-radius: 5px;">
+              <strong>${item.name}</strong><br>
+              <span style="color: #666;">Price: ₹${item.price} × Quantity: ${item.quantity}</span><br>
+              <span style="color: #2d5a27; font-weight: bold;">Subtotal: ₹${item.price * item.quantity}</span>
+             </li>`
           ).join('');
           
+          // Get payment method and shipping details
+          const paymentMethod = payload.payment_method || 'Online Payment';
+          const shipping = payload.shipping || {};
+          const orderId = data[0]?.id || 'N/A';
+          
           const html = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 20px;">
               <div style="text-align: center; margin-bottom: 30px;">
                 <h1 style="color: #2d5a27; margin: 0;">🌿 Himgiri Naturals</h1>
               </div>
               <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
-                <h2 style="color: #2d5a27; margin-bottom: 20px;">🎉 Order Confirmed!</h2>
+                <h2 style="color: #2d5a27; margin-bottom: 20px; text-align: center;">🎉 Order Confirmed!</h2>
                 <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Hello ${name || email.split('@')[0]},</p>
                 <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Thank you for your order! We're excited to bring you the finest Himalayan dry fruits and nuts.</p>
                 
+                <!-- Order ID and Status -->
+                <div style="background-color: #2d5a27; color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                  <h3 style="margin: 0; margin-bottom: 10px;">Order Details</h3>
+                  <p style="margin: 0; font-size: 18px; font-weight: bold;">Order ID: #${orderId}</p>
+                  <p style="margin: 5px 0; opacity: 0.9;">Status: Pending</p>
+                </div>
+                
+                <!-- Order Items -->
                 <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e0e0e0;">
-                  <h3 style="color: #2d5a27; margin-bottom: 15px;">Order Details</h3>
-                  <ul style="color: #555; line-height: 1.6; margin-bottom: 15px; padding-left: 20px;">
+                  <h3 style="color: #2d5a27; margin-bottom: 15px;">📦 Order Items</h3>
+                  <ul style="color: #555; line-height: 1.6; margin-bottom: 15px; padding-left: 0; list-style: none;">
                     ${orderItems}
                   </ul>
-                  <div style="border-top: 1px solid #e0e0e0; padding-top: 15px;">
-                    <p style="font-weight: bold; color: #2d5a27; font-size: 18px;">Total Amount: ₹${amount}</p>
+                  <div style="border-top: 2px solid #2d5a27; padding-top: 15px;">
+                    <p style="font-weight: bold; color: #2d5a27; font-size: 20px; text-align: right; margin: 0;">Total Amount: ₹${amount}</p>
                   </div>
                 </div>
                 
-                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">We'll start processing your order right away and keep you updated on its status.</p>
-                <p style="color: #555; line-height: 1.6;">Thank you for choosing Himgiri Naturals!</p>
+                <!-- Payment Method -->
+                <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e0e0e0;">
+                  <h3 style="color: #2d5a27; margin-bottom: 15px;">💳 Payment Information</h3>
+                  <p style="color: #555; line-height: 1.6; margin: 0;">
+                    <strong>Payment Method:</strong> ${paymentMethod}<br>
+                    ${paymentMethod.toLowerCase().includes('cod') ? 
+                      '<span style="color: #e74c3c; font-weight: bold;">💰 Cash on Delivery - Pay when you receive your order</span>' : 
+                      '<span style="color: #27ae60; font-weight: bold;">✅ Payment completed online</span>'
+                    }
+                  </p>
+                </div>
+                
+                <!-- Shipping Address -->
+                ${shipping.address ? `
+                <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e0e0e0;">
+                  <h3 style="color: #2d5a27; margin-bottom: 15px;">📍 Shipping Address</h3>
+                  <p style="color: #555; line-height: 1.6; margin: 0;">
+                    <strong>${name || email.split('@')[0]}</strong><br>
+                    ${shipping.address}<br>
+                    ${shipping.city ? `${shipping.city}, ` : ''}${shipping.state ? `${shipping.state} ` : ''}${shipping.pincode ? `${shipping.pincode}` : ''}<br>
+                    ${shipping.phone ? `Phone: ${shipping.phone}` : ''}
+                  </p>
+                </div>
+                ` : ''}
+                
+                <!-- Next Steps -->
+                <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2d5a27;">
+                  <h3 style="color: #2d5a27; margin-bottom: 15px;">📋 What Happens Next?</h3>
+                  <ol style="color: #555; line-height: 1.6; margin: 0; padding-left: 20px;">
+                    <li>We'll start processing your order right away</li>
+                    <li>You'll receive updates on your order status</li>
+                    <li>Your order will be carefully packed and shipped</li>
+                    <li>You'll receive tracking information when available</li>
+                  </ol>
+                </div>
+                
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px; text-align: center;">
+                  <strong>Thank you for choosing Himgiri Naturals!</strong><br>
+                  We're committed to bringing you the finest quality products.
+                </p>
               </div>
               <div style="text-align: center; margin-top: 30px; color: #888; font-size: 14px;">
                 <p>© 2025 Himgiri Naturals. All rights reserved.</p>
+                <p>If you have any questions, please contact our support team.</p>
               </div>
             </div>`
           
           await transporter.sendMail({
             from: smtpFrom,
             to: email,
-            subject: 'Order Confirmed - Himgiri Naturals 🎉',
+            subject: `Order Confirmed - #${orderId} - Himgiri Naturals 🎉`,
             html
           })
           
