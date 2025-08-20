@@ -102,6 +102,10 @@ export function Header({ currentPage, onNavigate }: HeaderProps) {
                       </div>
                     </div>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onNavigate('dashboard')}>
+                      <User className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onNavigate('orders')}>
                       <Package className="mr-2 h-4 w-4" />
                       My Orders
@@ -109,6 +113,10 @@ export function Header({ currentPage, onNavigate }: HeaderProps) {
                     <DropdownMenuItem onClick={() => onNavigate('cart')}>
                       <ShoppingCart className="mr-2 h-4 w-4" />
                       My Cart
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onNavigate('wishlist')}>
+                      <Heart className="mr-2 h-4 w-4" />
+                      Wishlist
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>

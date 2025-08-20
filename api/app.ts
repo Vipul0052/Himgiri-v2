@@ -27,6 +27,45 @@ function getMailer() {
   return { transporter, smtpFrom }
 }
 
+async function sendOrderStatusEmail(email: string, name: string, status: string, trackingNumber?: string) {
+  try {
+    const { transporter, smtpFrom } = getMailer()
+    const statusEmojis: { [key: string]: string } = {
+      'pending': '⏳',
+      'processing': '🔧',
+      'shipped': '📦',
+      'delivered': '✅',
+      'cancelled': '❌'
+    }
+    
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #2d5a27; margin: 0;">🌿 Himgiri Naturals</h1>
+        </div>
+        <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
+          <h2 style="color: #2d5a27; margin-bottom: 20px;">${statusEmojis[status] || '📋'} Order Status Update</h2>
+          <p style="color: #555; line-height: 1.6; margin-bottom: 15px;">Hello ${name},</p>
+          <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Your order status has been updated to: <strong style="color: #2d5a27;">${status.toUpperCase()}</strong></p>
+          ${trackingNumber ? `<p style="color: #555; line-height: 1.6; margin-bottom: 20px;"><strong>Tracking Number:</strong> ${trackingNumber}</p>` : ''}
+          <p style="color: #555; line-height: 1.6;">Thank you for choosing Himgiri Naturals!</p>
+        </div>
+        <div style="text-align: center; margin-top: 30px; color: #888; font-size: 14px;">
+          <p>© 2025 Himgiri Naturals. All rights reserved.</p>
+        </div>
+      </div>`
+    
+    await transporter.sendMail({
+      from: smtpFrom,
+      to: email,
+      subject: `Order Status Update - ${status.toUpperCase()}`,
+      html
+    })
+  } catch (error) {
+    console.error('Failed to send order status email:', error)
+  }
+}
+
 function ok(res: any, body: any) { res.status(200).json(body) }
 function bad(res: any, msg: string) { res.status(400).json({ message: msg }) }
 function err(res: any, msg: string, details?: any) { res.status(500).json({ message: msg, details }) }
@@ -178,6 +217,143 @@ export default async function handler(req: any, res: any) {
         
         console.log('Order created successfully:', data)
         return ok(res, { ok: true, order: data })
+      }
+
+      // User Dashboard & Order Management
+      case 'user.orders': {
+        const supabase = getSupabase()
+        const { user_id, email } = req.query || {}
+        if (!user_id && !email) return bad(res, 'User ID or email required')
+        
+        let query = supabase.from('orders').select('*').order('created_at', { ascending: false })
+        if (user_id) query = query.eq('user_id', user_id)
+        if (email) query = query.eq('email', email)
+        
+        const { data, error } = await query
+        if (error) return err(res, 'Failed to fetch orders')
+        return ok(res, { orders: data })
+      }
+
+      case 'user.profile': {
+        const supabase = getSupabase()
+        const { user_id } = req.query || {}
+        if (!user_id) return bad(res, 'User ID required')
+        
+        const { data, error } = await supabase.from('users').select('id, email, name, created_at').eq('id', user_id).single()
+        if (error) return err(res, 'Failed to fetch user profile')
+        return ok(res, { user: data })
+      }
+
+      case 'user.update-profile': {
+        const supabase = getSupabase()
+        const { user_id, name, email } = req.body || {}
+        if (!user_id) return bad(res, 'User ID required')
+        
+        const { error } = await supabase.from('users').update({ name, email }).eq('id', user_id)
+        if (error) return err(res, 'Failed to update profile')
+        return ok(res, { ok: true })
+      }
+
+      // Order Tracking & Status Updates
+      case 'order.update-status': {
+        const supabase = getSupabase()
+        const { order_id, status, tracking_number, shipping_updates } = req.body || {}
+        if (!order_id || !status) return bad(res, 'Order ID and status required')
+        
+        const updateData: any = { status, updated_at: new Date().toISOString() }
+        if (tracking_number) updateData.tracking_number = tracking_number
+        if (shipping_updates) updateData.shipping_updates = shipping_updates
+        
+        const { error } = await supabase.from('orders').update(updateData).eq('id', order_id)
+        if (error) return err(res, 'Failed to update order status')
+        
+        // Send email notification if status changed
+        try {
+          const { data: order } = await supabase.from('orders').select('email, name, status').eq('id', order_id).single()
+          if (order) {
+            await sendOrderStatusEmail(order.email, order.name, status, tracking_number)
+          }
+        } catch (e) {
+          console.log('Email notification failed:', e)
+        }
+        
+        return ok(res, { ok: true })
+      }
+
+      // Wishlist Management
+      case 'wishlist.add': {
+        const supabase = getSupabase()
+        const { user_id, product_id, product_data } = req.body || {}
+        if (!user_id || !product_id) return bad(res, 'User ID and product ID required')
+        
+        const { error } = await supabase.from('wishlist').upsert([{
+          user_id,
+          product_id,
+          product_data,
+          created_at: new Date().toISOString()
+        }])
+        
+        if (error) return err(res, 'Failed to add to wishlist')
+        return ok(res, { ok: true })
+      }
+
+      case 'wishlist.remove': {
+        const supabase = getSupabase()
+        const { user_id, product_id } = req.body || {}
+        if (!user_id || !product_id) return bad(res, 'User ID and product ID required')
+        
+        const { error } = await supabase.from('wishlist').delete().eq('user_id', user_id).eq('product_id', product_id)
+        if (error) return err(res, 'Failed to remove from wishlist')
+        return ok(res, { ok: true })
+      }
+
+      case 'wishlist.get': {
+        const supabase = getSupabase()
+        const { user_id } = req.query || {}
+        if (!user_id) return bad(res, 'User ID required')
+        
+        const { data, error } = await supabase.from('wishlist').select('*').eq('user_id', user_id).order('created_at', { ascending: false })
+        if (error) return err(res, 'Failed to fetch wishlist')
+        return ok(res, { wishlist: data })
+      }
+
+      // Product Reviews
+      case 'review.add': {
+        const supabase = getSupabase()
+        const { user_id, product_id, rating, comment, user_name } = req.body || {}
+        if (!user_id || !product_id || !rating) return bad(res, 'User ID, product ID, and rating required')
+        
+        const { error } = await supabase.from('reviews').insert([{
+          user_id,
+          product_id,
+          rating,
+          comment,
+          user_name,
+          created_at: new Date().toISOString()
+        }])
+        
+        if (error) return err(res, 'Failed to add review')
+        return ok(res, { ok: true })
+      }
+
+      case 'review.get': {
+        const supabase = getSupabase()
+        const { product_id } = req.query || {}
+        if (!product_id) return bad(res, 'Product ID required')
+        
+        const { data, error } = await supabase.from('reviews').select('*').eq('product_id', product_id).order('created_at', { ascending: false })
+        if (error) return err(res, 'Failed to fetch reviews')
+        return ok(res, { reviews: data })
+      }
+
+      case 'review.user': {
+        const supabase = getSupabase()
+        const { user_id } = req.query || {}
+        if (!user_id) return bad(res, 'User ID required')
+        
+        const { data, error } = await supabase.from('reviews').select('*').eq('user_id', user_id).order('created_at', { ascending: false })
+        if (error) return err(res, 'Failed to fetch user reviews')
+        return ok(res, { reviews: data })
       }
 
       case 'ping':
