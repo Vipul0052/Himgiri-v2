@@ -262,6 +262,42 @@ export default async function handler(req: any, res: any) {
         
         if (updateError) return err(res, 'Failed to verify email')
         
+        // Send welcome email after successful verification
+        try {
+          const { transporter, smtpFrom } = getMailer()
+          const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #2d5a27; margin: 0;">🌿 Himgiri Naturals</h1>
+              </div>
+              <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
+                <h2 style="color: #2d5a27; margin-bottom: 20px;">Welcome to Himgiri Naturals! 🌿</h2>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Hello ${user.name || user.email.split('@')[0]},</p>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">🎉 Your email has been verified successfully!</p>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">You can now login to your account and start shopping for premium Himalayan dry fruits and nuts.</p>
+                <div style="background-color: #2d5a27; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <p style="margin: 0; font-weight: bold;">Your account is now active!</p>
+                </div>
+                <p style="color: #555; line-height: 1.6;">Thank you for choosing Himgiri Naturals!</p>
+              </div>
+              <div style="text-align: center; margin-top: 30px; color: #888; font-size: 14px;">
+                <p>© 2025 Himgiri Naturals. All rights reserved.</p>
+              </div>
+            </div>`
+          
+          await transporter.sendMail({
+            from: smtpFrom,
+            to: user.email,
+            subject: 'Welcome to Himgiri Naturals! 🎉',
+            html
+          })
+          
+          console.log('Welcome email sent successfully to:', user.email)
+        } catch (emailError) {
+          console.error('Welcome email failed:', emailError)
+          // Don't fail the verification if welcome email fails
+        }
+        
         return ok(res, { message: 'Email verified successfully! You can now login.' })
       }
 

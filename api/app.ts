@@ -204,7 +204,7 @@ export default async function handler(req: any, res: any) {
       case 'orders.create': {
         const supabase = getSupabase()
         const payload = req.body || {}
-        const { email, amount, items } = payload
+        const { email, amount, items, name } = payload
         if (!email || !amount || !Array.isArray(items)) return bad(res, 'Invalid payload')
         
         console.log('Creating order with payload:', JSON.stringify(payload, null, 2))
@@ -216,6 +216,55 @@ export default async function handler(req: any, res: any) {
         }
         
         console.log('Order created successfully:', data)
+        
+        // Send order confirmation email
+        try {
+          const { transporter, smtpFrom } = getMailer()
+          const orderItems = items.map((item: any) => 
+            `<li>${item.name} - ₹${item.price} x ${item.quantity}</li>`
+          ).join('');
+          
+          const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #2d5a27; margin: 0;">🌿 Himgiri Naturals</h1>
+              </div>
+              <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
+                <h2 style="color: #2d5a27; margin-bottom: 20px;">🎉 Order Confirmed!</h2>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Hello ${name || email.split('@')[0]},</p>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Thank you for your order! We're excited to bring you the finest Himalayan dry fruits and nuts.</p>
+                
+                <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e0e0e0;">
+                  <h3 style="color: #2d5a27; margin-bottom: 15px;">Order Details</h3>
+                  <ul style="color: #555; line-height: 1.6; margin-bottom: 15px; padding-left: 20px;">
+                    ${orderItems}
+                  </ul>
+                  <div style="border-top: 1px solid #e0e0e0; padding-top: 15px;">
+                    <p style="font-weight: bold; color: #2d5a27; font-size: 18px;">Total Amount: ₹${amount}</p>
+                  </div>
+                </div>
+                
+                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">We'll start processing your order right away and keep you updated on its status.</p>
+                <p style="color: #555; line-height: 1.6;">Thank you for choosing Himgiri Naturals!</p>
+              </div>
+              <div style="text-align: center; margin-top: 30px; color: #888; font-size: 14px;">
+                <p>© 2025 Himgiri Naturals. All rights reserved.</p>
+              </div>
+            </div>`
+          
+          await transporter.sendMail({
+            from: smtpFrom,
+            to: email,
+            subject: 'Order Confirmed - Himgiri Naturals 🎉',
+            html
+          })
+          
+          console.log('Order confirmation email sent successfully to:', email)
+        } catch (emailError) {
+          console.error('Order confirmation email failed:', emailError)
+          // Don't fail the order creation if email fails
+        }
+        
         return ok(res, { ok: true, order: data })
       }
 
