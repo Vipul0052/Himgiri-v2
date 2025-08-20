@@ -372,33 +372,49 @@ export default async function handler(req: any, res: any) {
       }
 
       case 'check-auth': {
-        // Check if user is authenticated from cookie
-        const cookies = req.headers.cookie || ''
-        const sessionCookie = cookies.split(';').find(c => c.trim().startsWith(`${COOKIE_NAME}=`))
-        
-        if (!sessionCookie) {
-          return res.status(401).json({ message: 'Not authenticated' })
-        }
-        
         try {
-          const token = sessionCookie.split('=')[1]
-          const jwtSecret = process.env.AUTH_SECRET
-          if (!jwtSecret) return res.status(500).json({ message: 'Server not configured' })
+          const cookies = req.headers.cookie || '';
+          const sessionCookie = cookies.split(';').find(c => c.trim().startsWith(`${COOKIE_NAME}=`));
           
-          // Verify and decode JWT token
-          const { payload } = await jwtVerify(token, new TextEncoder().encode(jwtSecret))
+          if (!sessionCookie) {
+            return res.status(401).json({ message: 'No session found' });
+          }
+          
+          const token = sessionCookie.split('=')[1];
+          const jwtSecret = process.env.AUTH_SECRET;
+          
+          if (!jwtSecret) {
+            return res.status(500).json({ message: 'Server not configured' });
+          }
+          
+          // Verify JWT token
+          const { payload } = await jwtVerify(token, new TextEncoder().encode(jwtSecret));
+          
+          if (!payload.sub) {
+            return res.status(401).json({ message: 'Invalid token' });
+          }
+          
+          // Get user data from Supabase
+          const supabase = getSupabase();
+          const { data: user, error } = await supabase.from('users')
+            .select('id, email, name')
+            .eq('id', payload.sub)
+            .maybeSingle();
+          
+          if (error || !user) {
+            return res.status(401).json({ message: 'User not found' });
+          }
           
           return ok(res, { 
-            user: {
-              id: payload.sub,
-              email: payload.email,
-              name: payload.name,
-              provider: 'google'
-            }
-          })
+            user: { 
+              id: user.id, 
+              email: user.email, 
+              name: user.name 
+            } 
+          });
         } catch (error) {
-          console.error('JWT verification failed:', error)
-          return res.status(401).json({ message: 'Invalid token' })
+          console.error('Auth check error:', error);
+          return res.status(401).json({ message: 'Authentication failed' });
         }
       }
 

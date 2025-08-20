@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
 
+  // Check for stored auth data on mount
   useEffect(() => {
     // Check for stored auth data on mount
     const storedUser = localStorage.getItem('himgiri_user');
@@ -66,6 +67,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setIsLoading(false);
   }, []);
+
+  // Listen for Google OAuth success event
+  useEffect(() => {
+    const handleGoogleAuthSuccess = async () => {
+      console.log('Checking Google OAuth authentication...');
+      await checkServerAuth();
+    };
+    
+    window.addEventListener('checkGoogleAuth', handleGoogleAuthSuccess);
+    
+    return () => {
+      window.removeEventListener('checkGoogleAuth', handleGoogleAuthSuccess);
+    };
+  }, []);
+
+  // Function to check authentication status from server
+  const checkServerAuth = async () => {
+    try {
+      const resp = await fetch('/api/auth?action=check-auth', {
+        method: 'GET',
+        credentials: 'include' // Include cookies
+      });
+      
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.user) {
+          const loggedInUser: User = {
+            id: String(data.user.id),
+            name: data.user.name || data.user.email.split('@')[0],
+            email: data.user.email,
+            provider: 'google'
+          };
+          setUser(loggedInUser);
+          localStorage.setItem('himgiri_user', JSON.stringify(loggedInUser));
+          console.log('User authenticated from server:', loggedInUser);
+        }
+      } else {
+        console.log('No active session found');
+      }
+    } catch (error) {
+      console.error('Failed to check server auth:', error);
+    }
+  };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {

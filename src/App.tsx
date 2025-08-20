@@ -26,6 +26,25 @@ import { Analytics } from "@vercel/analytics/react";
 export default function App() {
   const [currentPage, setCurrentPage] = useState<string>('home');
 
+  // Check for OAuth callback parameters on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const loginSuccess = urlParams.get('login');
+    const provider = urlParams.get('provider');
+    
+    if (loginSuccess === 'success' && provider === 'google') {
+      // Google OAuth was successful, trigger auth check
+      console.log('Google OAuth successful, checking authentication...');
+      
+      // Dispatch custom event to trigger auth check
+      window.dispatchEvent(new CustomEvent('checkGoogleAuth'));
+      
+      // Clean up URL parameters
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+  }, []);
+
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
   };
