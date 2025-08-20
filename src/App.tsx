@@ -15,7 +15,7 @@ import { ShippingInfoPage } from '../pages/ShippingInfoPage';
 import { ReturnsRefundsPage } from '../pages/ReturnsRefundsPage';
 import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from '../pages/TermsOfServicePage';
-import { UserDashboardPage } from '../pages/UserDashboardPage';
+// import { UserDashboardPage } from '../pages/UserDashboardPage';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { CartProvider } from '../contexts/CartContext';
 import { AuthProvider } from '../contexts/AuthContext';
@@ -65,8 +65,8 @@ export default function App() {
         return <AboutPage />;
       case 'login':
         return <LoginPage onNavigate={handleNavigate} />;
-      case 'dashboard':
-        return <UserDashboardPage onNavigate={handleNavigate} />;
+      // case 'dashboard':
+      //   return <UserDashboardPage onNavigate={handleNavigate} />;
       case 'cart':
         return <CartPage onNavigate={handleNavigate} />;
       case 'checkout':
