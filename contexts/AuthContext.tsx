@@ -85,6 +85,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Listen for order refresh event
+  useEffect(() => {
+    const handleRefreshOrders = async () => {
+      if (user) {
+        console.log('Refreshing user orders...');
+        await loadUserOrders(user.id);
+      }
+    };
+    
+    window.addEventListener('refreshUserOrders', handleRefreshOrders);
+    
+    return () => {
+      window.removeEventListener('refreshUserOrders', handleRefreshOrders);
+    };
+  }, [user]);
+
   // Function to check authentication status from server
   const checkServerAuth = async () => {
     try {
@@ -256,9 +272,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Send logout email notification before clearing user data
+    if (user) {
+      try {
+        await fetch('/api/auth?action=logout-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: user.email,
+            name: user.name
+          })
+        });
+        console.log('Logout email sent successfully');
+      } catch (error) {
+        console.error('Failed to send logout email:', error);
+        // Don't fail logout if email fails
+      }
+    }
+    
     setUser(null);
+    setOrders([]);
     localStorage.removeItem('himgiri_user');
+    // Clear all user-specific localStorage data
+    if (user) {
+      localStorage.removeItem(`himgiri_orders_${user.id}`);
+      localStorage.removeItem('himgiri_return_url');
+    }
   };
 
   const addOrder = async (orderData: Omit<Order, 'id' | 'date'>, paymentMethod: string = 'online') => {

@@ -96,7 +96,7 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
           phone: shippingInfo.phone
         },
         status: orderData.status,
-        payment_method: paymentMethod,
+        payment_method: paymentMethod, // Use the current payment method
         created_at: new Date().toISOString()
       };
 
@@ -109,6 +109,12 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
       if (!resp.ok) {
         console.error('Failed to save order to database:', await resp.text());
         return false;
+      }
+
+      // After successful order creation, refresh the orders list
+      if (user) {
+        // Trigger a refresh of user orders
+        window.dispatchEvent(new CustomEvent('refreshUserOrders'));
       }
 
       return true;
@@ -150,7 +156,7 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
               showToast('Order placed but failed to save to database', 'warning');
             }
             
-            if (user) addOrder(orderData, 'razorpay'); clearCart(); showToast('Payment successful! Order placed successfully.', 'success'); setTimeout(() => onNavigate(user ? 'orders' : 'home'), 1500); setIsProcessing(false);
+            clearCart(); showToast('Payment successful! Order placed successfully.', 'success'); setTimeout(() => onNavigate(user ? 'orders' : 'home'), 1500); setIsProcessing(false);
           }
         };
         const rz = new window.Razorpay(options);
@@ -168,7 +174,7 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
         showToast('Order placed but failed to save to database', 'warning');
       }
       
-      if (user) addOrder(orderData, paymentMethod); clearCart();
+      clearCart();
       showToast(paymentMethod === 'upi' ? 'Payment successful! Order placed successfully.' : 'Order placed successfully! Pay on delivery.', 'success');
       setTimeout(() => onNavigate(user ? 'orders' : 'home'), 1500);
     } catch { showToast('Failed to place order. Please try again.', 'error'); } finally { setIsProcessing(false); }
