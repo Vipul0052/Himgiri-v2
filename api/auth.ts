@@ -24,7 +24,7 @@ function getMailer() {
   const smtpPass = process.env.SMTP_PASS
   const smtpFrom = process.env.SMTP_FROM || smtpUser
   if (!smtpUser || !smtpPass) throw new Error('Email is not configured')
-  const transporter = nodemailer.createTransporter({ service: 'gmail', auth: { user: smtpUser, pass: smtpPass } })
+  const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: smtpUser, pass: smtpPass } })
   return { transporter, smtpFrom }
 }
 
@@ -348,7 +348,10 @@ export default async function handler(req: any, res: any) {
         
         // Send login welcome message for every session
         try {
+          console.log('Attempting to send login welcome email to:', data.email)
           const { transporter, smtpFrom } = getMailer()
+          console.log('Mailer configured successfully, smtpFrom:', smtpFrom)
+          
           const html = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <div style="text-align: center; margin-bottom: 30px;">
@@ -369,6 +372,7 @@ export default async function handler(req: any, res: any) {
               </div>
             </div>`
           
+          console.log('Sending email with transporter...')
           await transporter.sendMail({
             from: smtpFrom,
             to: data.email,
@@ -397,8 +401,13 @@ export default async function handler(req: any, res: any) {
         const { email, name } = req.body || {}
         if (!email) return bad(res, 'Email required')
         
+        console.log('Logout email requested for:', { email, name })
+        
         try {
+          console.log('Attempting to send logout email to:', email)
           const { transporter, smtpFrom } = getMailer()
+          console.log('Mailer configured successfully for logout, smtpFrom:', smtpFrom)
+          
           const html = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <div style="text-align: center; margin-bottom: 30px;">
@@ -419,6 +428,7 @@ export default async function handler(req: any, res: any) {
               </div>
             </div>`
           
+          console.log('Sending logout email with transporter...')
           await transporter.sendMail({
             from: smtpFrom,
             to: email,
