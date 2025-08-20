@@ -1,9 +1,10 @@
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Separator } from '../components/ui/separator';
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, Truck, Shield } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, Truck, Shield, Lock } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 
 interface CartPageProps {
@@ -12,7 +13,34 @@ interface CartPageProps {
 
 export function CartPage({ onNavigate }: CartPageProps) {
   const { items, total, updateQuantity, removeItem } = useCart();
+  const { user } = useAuth();
   const { showToast } = useToast();
+  
+  // Check if user is logged in
+  if (!user) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
+        <div className="mb-6">
+          <Lock className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Login Required</h2>
+          <p className="text-muted-foreground mb-6">
+            You need to be logged in to view your cart and make purchases
+          </p>
+        </div>
+        <div className="space-y-3">
+          <Button onClick={() => onNavigate('login')} className="w-full">
+            Login to Continue
+          </Button>
+          <Button variant="outline" onClick={() => onNavigate('signup')} className="w-full">
+            Create New Account
+          </Button>
+          <Button variant="ghost" onClick={() => onNavigate('shop')} className="w-full">
+            Continue Shopping
+          </Button>
+        </div>
+      </div>
+    );
+  }
   
   const deliveryFee = total > 999 ? 0 : 50;
   const finalTotal = total + deliveryFee;

@@ -20,6 +20,32 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
   const { user, addOrder } = useAuth();
   const { showToast } = useToast();
   
+  // Check if user is logged in
+  if (!user) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
+        <div className="mb-6">
+          <Shield className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Login Required</h2>
+          <p className="text-muted-foreground mb-6">
+            You need to be logged in to complete your purchase
+          </p>
+        </div>
+        <div className="space-y-3">
+          <Button onClick={() => onNavigate('login')} className="w-full">
+            Login to Continue
+          </Button>
+          <Button variant="outline" onClick={() => onNavigate('signup')} className="w-full">
+            Create New Account
+          </Button>
+          <Button variant="ghost" onClick={() => onNavigate('shop')} className="w-full">
+            Continue Shopping
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [isProcessing, setIsProcessing] = useState(false);
   const [shippingInfo, setShippingInfo] = useState({
@@ -84,6 +110,13 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
   };
 
   const handlePlaceOrder = async () => {
+    // Double-check authentication
+    if (!user) {
+      showToast('Please login to place an order', 'error');
+      onNavigate('login');
+      return;
+    }
+    
     if (!validateForm()) { showToast('Please fill in all required fields', 'error'); return; }
     if (items.length === 0) { showToast('Your cart is empty', 'error'); return; }
     setIsProcessing(true);
