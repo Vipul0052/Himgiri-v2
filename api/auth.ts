@@ -346,41 +346,8 @@ export default async function handler(req: any, res: any) {
         
         res.setHeader('Set-Cookie', `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}`)
         
-        // Send login welcome message
-        try {
-          const { transporter, smtpFrom } = getMailer()
-          const html = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #2d5a27; margin: 0;">🌿 Himgiri Naturals</h1>
-              </div>
-              <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
-                <h2 style="color: #2d5a27; margin-bottom: 20px;">Welcome Back! 🌿</h2>
-                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Hello ${data.name || data.email.split('@')[0]},</p>
-                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">🎉 Great to see you again!</p>
-                <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">You've successfully logged into your Himgiri Naturals account.</p>
-                <div style="background-color: #2d5a27; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                  <p style="margin: 0; font-weight: bold;">Ready to shop for premium Himalayan dry fruits and nuts!</p>
-                </div>
-                <p style="color: #555; line-height: 1.6;">Thank you for choosing Himgiri Naturals!</p>
-              </div>
-              <div style="text-align: center; margin-top: 30px; color: #888; font-size: 14px;">
-                <p>© 2025 Himgiri Naturals. All rights reserved.</p>
-              </div>
-            </div>`
-          
-          await transporter.sendMail({
-            from: smtpFrom,
-            to: data.email,
-            subject: 'Welcome Back - Himgiri Naturals 🌿',
-            html
-          })
-          
-          console.log('Login welcome email sent successfully to:', data.email)
-        } catch (emailError) {
-          console.error('Login welcome email failed:', emailError)
-          // Don't fail the login if welcome email fails
-        }
+        // Note: Login welcome emails removed to prevent spam
+        // Users will only get welcome emails on signup, not every login
         
         return ok(res, { 
           ok: true, 

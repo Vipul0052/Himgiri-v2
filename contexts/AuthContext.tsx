@@ -125,15 +125,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.orders) {
           // Transform database orders to match local Order interface
           const transformedOrders = data.orders.map((dbOrder: any) => ({
-            id: String(dbOrder.id),
+            id: String(dbOrder.id), // Use the real database ID
             date: dbOrder.created_at,
             total: dbOrder.amount,
             status: dbOrder.status || 'pending',
             items: Array.isArray(dbOrder.items) ? dbOrder.items : []
           }));
           setOrders(transformedOrders);
-          // Store in localStorage for offline access
+          // Store in localStorage with real database IDs
           localStorage.setItem(`himgiri_orders_${userId}`, JSON.stringify(transformedOrders));
+          console.log('Orders loaded from database with real IDs:', transformedOrders);
         }
       }
     } catch (error) {
@@ -260,22 +261,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('himgiri_user');
   };
 
-  const addOrder = async (orderData: Omit<Order, 'id' | 'date'>) => {
-    const newOrder: Order = {
-      ...orderData,
-      id: Math.random().toString(36).substring(7),
-      date: new Date().toISOString(),
-    };
-    
-    const updatedOrders = [newOrder, ...orders];
-    setOrders(updatedOrders);
-    
-    // Store in localStorage
-    if (user) {
-      localStorage.setItem(`himgiri_orders_${user.id}`, JSON.stringify(updatedOrders));
-    }
-    
-    // Also save to database if user is logged in
+  const addOrder = async (orderData: Omit<Order, 'id' | 'date'>, paymentMethod: string = 'online') => {
+    // First save to database to get the real order ID
     if (user) {
       try {
         const orderPayload = {
@@ -286,7 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           currency: 'INR',
           items: orderData.items,
           status: 'pending',
-          payment_method: 'online',
+          payment_method: paymentMethod, // Use the actual payment method
           created_at: new Date().toISOString()
         };
         
@@ -297,13 +284,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         
         if (resp.ok) {
-          console.log('Order saved to database successfully');
+          const responseData = await resp.json();
+          const realOrderId = responseData.order?.[0]?.id;
+          
+          if (realOrderId) {
+            // Create order with real database ID
+            const newOrder: Order = {
+              ...orderData,
+              id: String(realOrderId), // Use real database ID
+              date: new Date().toISOString(),
+            };
+            
+            const updatedOrders = [newOrder, ...orders];
+            setOrders(updatedOrders);
+            
+            // Store in localStorage with real ID
+            localStorage.setItem(`himgiri_orders_${user.id}`, JSON.stringify(updatedOrders));
+            
+            console.log('Order saved to database successfully with ID:', realOrderId);
+          } else {
+            console.error('No order ID returned from database');
+          }
         } else {
           console.error('Failed to save order to database');
         }
       } catch (error) {
         console.error('Error saving order to database:', error);
       }
+    } else {
+      // Fallback for non-logged-in users (shouldn't happen in normal flow)
+      const newOrder: Order = {
+        ...orderData,
+        id: Math.random().toString(36).substring(7),
+        date: new Date().toISOString(),
+      };
+      
+      const updatedOrders = [newOrder, ...orders];
+      setOrders(updatedOrders);
     }
   };
 

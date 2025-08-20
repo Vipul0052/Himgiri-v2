@@ -150,7 +150,7 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
               showToast('Order placed but failed to save to database', 'warning');
             }
             
-            if (user) addOrder(orderData); clearCart(); showToast('Payment successful! Order placed successfully.', 'success'); setTimeout(() => onNavigate(user ? 'orders' : 'home'), 1500); setIsProcessing(false);
+            if (user) addOrder(orderData, 'razorpay'); clearCart(); showToast('Payment successful! Order placed successfully.', 'success'); setTimeout(() => onNavigate(user ? 'orders' : 'home'), 1500); setIsProcessing(false);
           }
         };
         const rz = new window.Razorpay(options);
@@ -168,7 +168,7 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
         showToast('Order placed but failed to save to database', 'warning');
       }
       
-      if (user) addOrder(orderData); clearCart();
+      if (user) addOrder(orderData, paymentMethod); clearCart();
       showToast(paymentMethod === 'upi' ? 'Payment successful! Order placed successfully.' : 'Order placed successfully! Pay on delivery.', 'success');
       setTimeout(() => onNavigate(user ? 'orders' : 'home'), 1500);
     } catch { showToast('Failed to place order. Please try again.', 'error'); } finally { setIsProcessing(false); }
