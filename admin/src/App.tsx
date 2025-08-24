@@ -1,5 +1,5 @@
 import React from 'react'
-import { Routes, Route, Navigate, Link } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { ProductsPage } from './pages/ProductsPage'
@@ -9,18 +9,29 @@ import { InventoryPage } from './pages/InventoryPage'
 
 function useAuth() {
   const [isAdmin, setIsAdmin] = React.useState<boolean>(false)
+  const [loading, setLoading] = React.useState<boolean>(true)
   React.useEffect(() => {
-    // Ping admin session
-    fetch('/api/admin?action=session', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => setIsAdmin(!!data?.admin))
-      .catch(() => setIsAdmin(false))
+    let cancelled = false
+    async function run() {
+      try {
+        const r = await fetch('/api/admin?action=session', { credentials: 'include' })
+        const j = r.ok ? await r.json() : { admin: false }
+        if (!cancelled) setIsAdmin(!!j?.admin)
+      } catch {
+        if (!cancelled) setIsAdmin(false)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    run()
+    return () => { cancelled = true }
   }, [])
-  return { isAdmin, setIsAdmin }
+  return { isAdmin, loading }
 }
 
 function Protected({ children }: { children: React.ReactNode }) {
-  const { isAdmin } = useAuth()
+  const { isAdmin, loading } = useAuth()
+  if (loading) return null
   if (!isAdmin) return <Navigate to="/login" replace />
   return <>{children}</>
 }
