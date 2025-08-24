@@ -19,9 +19,5 @@
         { "key": "X-XSS-Protection", "value": "1; mode=block" }
       ]
     }
-  ],
-  "routes": [
-    { "src": "/api/auth", "dest": "/api/auth.ts" },
-    { "src": "/api/app", "dest": "/api/app.ts" }
   ]
 }

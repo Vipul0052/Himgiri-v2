@@ -4,9 +4,6 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
-  "routes": [
-    { "src": "/api/admin", "dest": "/api/admin.ts" }
-  ],
   "headers": [
     { "source": "/(.*)", "headers": [
       { "key": "X-Content-Type-Options", "value": "nosniff" },
