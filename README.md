@@ -237,3 +237,19 @@ For support and questions:
 - [ ] Analytics integration
 - [ ] SEO optimization
 - [ ] PWA features
+
+## Admin Subdomain (Isolated App)
+
+The admin app lives in `admin/` and is deployed as a separate Vercel project.
+
+Setup steps:
+1) Supabase: run `database-admin.sql` (adds `users.role`, `inventory`, triggers, RLS)
+2) Vercel (new project): set Root Directory = `admin/`
+   - Env vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `ADMIN_AUTH_SECRET`
+   - Map domain: `admin.himgirinaturals.com`
+3) Seed an admin user in Supabase: `UPDATE users SET role='admin' WHERE email='you@example.com';`
+
+Security:
+- Admin auth uses HTTP-only JWT cookie (SameSite=Strict) scoped to admin host
+- Admin API verifies `Host` starts with `admin.`
+- Main site does not bundle or route any admin code

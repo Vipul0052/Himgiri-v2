@@ -39,6 +39,9 @@ CREATE TRIGGER trg_inventory_sync_product
   AFTER INSERT OR UPDATE ON inventory
   FOR EACH ROW EXECUTE FUNCTION sync_product_in_stock();
 
+-- Enable RLS for inventory (service role bypasses RLS for admin API)
+ALTER TABLE inventory ENABLE ROW LEVEL SECURITY;
+
 -- 4) View to surface low stock items
 CREATE OR REPLACE VIEW low_stock_items AS
 SELECT p.id as product_id,
