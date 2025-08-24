@@ -15,6 +15,10 @@ function bad(res: any, msg: string) { res.status(400).json({ message: msg }) }
 function err(res: any, msg: string, details?: any) { res.status(500).json({ message: msg, details }) }
 
 function enforceAdminSubdomain(req: any, res: any) {
+  // Allow non-production environments to access without subdomain to ease local/preview dev
+  if (process.env.NODE_ENV !== 'production' || process.env.ALLOW_ADMIN_NON_SUBDOMAIN === 'true') {
+    return true
+  }
   try {
     const host = req.headers['host'] as string | undefined
     if (!host) return
