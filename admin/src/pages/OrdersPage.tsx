@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 export function OrdersPage() {
   const navigate = useNavigate()
   const [orders, setOrders] = React.useState<any[]>([])
+  const [testResult, setTestResult] = React.useState<string>('')
 
   function goBack() { navigate('/') }
 
@@ -15,6 +16,20 @@ export function OrdersPage() {
   }
 
   React.useEffect(() => { load() }, [])
+
+  async function testEmail() {
+    try {
+      const r = await fetch('/api/admin?action=test-email', { credentials: 'include' })
+      const j = await r.json()
+      if (r.ok) {
+        setTestResult(`✅ ${j.message}`)
+      } else {
+        setTestResult(`❌ ${j.message}`)
+      }
+    } catch (e) {
+      setTestResult(`❌ Test failed: ${e.message}`)
+    }
+  }
 
   async function updateStatus(id: number, status: string) {
     const r = await fetch('/api/admin?action=orders.update-status', {
@@ -29,6 +44,8 @@ export function OrdersPage() {
       <div className="flex items-center gap-3">
         <button onClick={goBack} className="px-3 h-9 inline-flex items-center rounded-md border hover:bg-accent/10">Back</button>
         <h2 className="text-xl font-semibold">Orders</h2>
+        <button onClick={testEmail} className="px-3 h-9 inline-flex items-center rounded-md border bg-blue-100">Test Email</button>
+        {testResult && <span className="text-sm">{testResult}</span>}
       </div>
 
       <ul className="space-y-2">

@@ -115,6 +115,22 @@ export default async function handler(req: any, res: any) {
         return ok(res, { admin: user?.role === 'admin' })
       }
 
+      case 'ping':
+        return ok(res, { ok: true, method: req.method })
+
+      case 'test-email': {
+        try {
+          const { transporter, smtpFrom } = getMailer()
+          console.log('Testing SMTP connection...')
+          await transporter.verify()
+          console.log('SMTP connection verified')
+          return ok(res, { ok: true, message: 'SMTP connection successful', from: smtpFrom })
+        } catch (e) {
+          console.error('SMTP test failed:', e)
+          return err(res, 'SMTP connection failed', e.message)
+        }
+      }
+
       // Products
       case 'products.list': {
         await requireAdmin(req, res)
@@ -175,7 +191,9 @@ export default async function handler(req: any, res: any) {
         // Send email notification to the customer
         try {
           const { data: order } = await supabase.from('orders').select('email, name, status, tracking_number').eq('id', id).single()
+          console.log('Order data for email:', order)
           if (order?.email) {
+            console.log('Attempting to send email to:', order.email)
             const { transporter, smtpFrom } = getMailer()
             const statusTitle = String(status).toUpperCase()
             const tracking = tracking_number || (order as any).tracking_number
@@ -195,10 +213,15 @@ export default async function handler(req: any, res: any) {
                   <p>© 2025 Himgiri Naturals. All rights reserved.</p>
                 </div>
               </div>`
-            await transporter.sendMail({ from: smtpFrom, to: order.email, subject: `Order Status Update - ${statusTitle}`, html })
+            console.log('Sending email with transporter:', !!transporter, 'from:', smtpFrom)
+            const result = await transporter.sendMail({ from: smtpFrom, to: order.email, subject: `Order Status Update - ${statusTitle}`, html })
+            console.log('Email sent successfully:', result)
+          } else {
+            console.log('No email found for order:', id)
           }
         } catch (e) {
           console.error('order status email failed:', e)
+          console.error('Email error details:', e.message, e.stack)
         }
         return ok(res, { ok: true })
       }
