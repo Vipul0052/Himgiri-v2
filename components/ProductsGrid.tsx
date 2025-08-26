@@ -126,7 +126,7 @@ export function ProductsGrid({ products }: ProductsGridProps) {
                     ? 'bg-red-500 text-white hover:bg-red-600' 
                     : 'bg-white/80 text-gray-600 hover:bg-white'
                 }`}
-                onClick={() => toggleWishlist(product)}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(product) }}
               >
                 <Heart className={`w-4 h-4 ${wishlistItems.has(product.id) ? 'fill-current' : ''}`} />
               </Button>

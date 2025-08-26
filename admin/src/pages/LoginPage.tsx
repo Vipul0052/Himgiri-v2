@@ -31,14 +31,30 @@ export function LoginPage() {
   }
 
   return (
-    <div style={{ maxWidth: 360, margin: '80px auto', fontFamily: 'sans-serif' }}>
-      <h1>Admin Login</h1>
-      <form onSubmit={onSubmit}>
-        <label>Email<input value={email} onChange={e => setEmail(e.target.value)} type="email" required /></label>
-        <label>Password<input value={password} onChange={e => setPassword(e.target.value)} type="password" required /></label>
-        {error && <p style={{ color: 'crimson' }}>{error}</p>}
-        <button type="submit" disabled={submitting || !email || !password}>Login</button>
-      </form>
+    <div className="min-h-[70vh] flex items-center justify-center">
+      <div className="w-full max-w-sm bg-card border rounded-lg p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-6">
+          <img src="/logo-himgiri.svg" alt="Himgiri Naturals" className="h-8" />
+          <h1 className="text-lg font-semibold">Admin Login</h1>
+        </div>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm">Email</label>
+            <input className="w-full rounded-md border bg-input-background px-3 py-2 outline-none focus:ring-2 ring-ring"
+              value={email} onChange={e => setEmail(e.target.value)} type="email" required />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm">Password</label>
+            <input className="w-full rounded-md border bg-input-background px-3 py-2 outline-none focus:ring-2 ring-ring"
+              value={password} onChange={e => setPassword(e.target.value)} type="password" required />
+          </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button type="submit" disabled={submitting || !email || !password}
+            className="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 disabled:opacity-60">
+            {submitting ? 'Logging in…' : 'Login'}
+          </button>
+        </form>
+      </div>
     </div>
   )
 }
