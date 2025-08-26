@@ -119,25 +119,28 @@ export default async function handler(req: any, res: any) {
       case 'products.list': {
         await requireAdmin(req, res)
         const supabase = getSupabase()
-        const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false })
+        const { data, error } = await supabase.from('products').select('id, name, in_stock, updated_at').order('updated_at', { ascending: false })
         if (error) return err(res, 'Failed to fetch products')
         return ok(res, { products: data })
       }
       case 'products.create': {
         const admin = await requireAdmin(req, res); if (!admin) return
-        const { name, description, price, image, category, in_stock = true } = req.body || {}
-        if (!name || price === undefined) return bad(res, 'Missing fields')
+        const { name, in_stock = true } = req.body || {}
+        if (!name) return bad(res, 'Name required')
         const supabase = getSupabase()
-        const { data, error } = await supabase.from('products').insert([{ name, description, price, image, category, in_stock }]).select('*').single()
+        const { data, error } = await supabase.from('products').insert([{ name, in_stock }]).select('id, name, in_stock, updated_at').single()
         if (error) return err(res, 'Failed to create product')
         return ok(res, { product: data })
       }
       case 'products.update': {
         const admin = await requireAdmin(req, res); if (!admin) return
-        const { id, ...updates } = req.body || {}
+        const { id, name, in_stock } = req.body || {}
         if (!id) return bad(res, 'Product ID required')
         const supabase = getSupabase()
-        const { data, error } = await supabase.from('products').update(updates).eq('id', id).select('*').single()
+        const payload: any = {}
+        if (name !== undefined) payload.name = name
+        if (in_stock !== undefined) payload.in_stock = in_stock
+        const { data, error } = await supabase.from('products').update(payload).eq('id', id).select('id, name, in_stock, updated_at').single()
         if (error) return err(res, 'Failed to update product')
         return ok(res, { product: data })
       }
