@@ -6,6 +6,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
+  const [showPassword, setShowPassword] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [submitting, setSubmitting] = React.useState(false)
 
@@ -34,10 +35,10 @@ export function LoginPage() {
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-card border rounded-lg p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-6">
+        <div className="flex items-center gap-2 mb-2">
           <Logo size="md" showText className="select-none" />
-          <h1 className="text-lg font-semibold">Admin Login</h1>
         </div>
+        <h1 className="text-lg font-semibold mb-6">Welcome to Himgiri Naturals admin</h1>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm" htmlFor="email">Email</label>
@@ -46,8 +47,13 @@ export function LoginPage() {
           </div>
           <div className="space-y-2">
             <label className="text-sm" htmlFor="password">Password</label>
-            <input id="password" className="w-full rounded-md border bg-input-background px-3 py-2 outline-none focus:ring-2 ring-ring"
-              value={password} onChange={e => setPassword(e.target.value)} type="password" required />
+            <div className="relative">
+              <input id="password" className="w-full rounded-md border bg-input-background px-3 py-2 pr-10 outline-none focus:ring-2 ring-ring"
+                value={password} onChange={e => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} required />
+              <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute inset-y-0 right-2 my-auto h-8 px-2 rounded-md text-sm border bg-background">
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button type="submit" disabled={submitting || !email || !password}

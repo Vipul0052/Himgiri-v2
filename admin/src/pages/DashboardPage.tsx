@@ -12,18 +12,18 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button onClick={goBack} className="px-3 h-9 inline-flex items-center rounded-md border">Back</button>
-          <div>
+        <div className="flex items-center gap-4">
+          <button onClick={goBack} className="px-3 h-9 inline-flex items-center rounded-md border hover:bg-accent/10">Back</button>
+          <div className="ml-1">
             <h1 className="text-2xl font-semibold">Himgiri Admin</h1>
             <p className="text-sm text-muted-foreground">Manage products, orders, users and inventory</p>
           </div>
         </div>
         <nav className="flex gap-2">
-          <Link to="/products" className="px-3 h-9 inline-flex items-center rounded-md border">Products</Link>
-          <Link to="/orders" className="px-3 h-9 inline-flex items-center rounded-md border">Orders</Link>
-          <Link to="/inventory" className="px-3 h-9 inline-flex items-center rounded-md border">Inventory</Link>
-          <Link to="/users" className="px-3 h-9 inline-flex items-center rounded-md border">Users</Link>
+          <Link to="/products" className="px-3 h-9 inline-flex items-center rounded-md border hover:bg-accent/10">Products</Link>
+          <Link to="/orders" className="px-3 h-9 inline-flex items-center rounded-md border hover:bg-accent/10">Orders</Link>
+          <Link to="/inventory" className="px-3 h-9 inline-flex items-center rounded-md border hover:bg-accent/10">Inventory</Link>
+          <Link to="/users" className="px-3 h-9 inline-flex items-center rounded-md border hover:bg-accent/10">Users</Link>
         </nav>
       </div>
 

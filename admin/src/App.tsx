@@ -60,29 +60,39 @@ export function App() {
     { to: '/users', label: 'Users' },
   ]
 
+  const isLogin = location.pathname === '/login'
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="flex items-center justify-between px-6 py-4 border-b">
-        <div className="flex items-center gap-4">
-          <Logo size="md" showText className="select-none" onClick={() => navigate('/')} />
-          <nav className="hidden md:flex items-center gap-1">
-            {tabs.map(t => (
-              <Link key={t.to} to={t.to} className={`px-3 h-9 inline-flex items-center rounded-md border ${location.pathname === t.to ? 'bg-accent/20' : ''}`}>
-                {t.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setDark(v => !v)} className="text-sm px-3 h-9 rounded-md border">
-            {dark ? 'Light' : 'Dark'} mode
-          </button>
-          <button onClick={handleLogout} className="text-sm px-3 h-9 rounded-md border">
-            Logout
-          </button>
-        </div>
+      <header className={`flex items-center justify-between px-6 py-4 border-b ${isLogin ? 'justify-center' : ''}`}>
+        {!isLogin ? (
+          <>
+            <div className="flex items-center gap-4">
+              <Logo size="md" showText className="select-none" onClick={() => navigate('/')} />
+              <nav className="hidden md:flex items-center gap-1">
+                {tabs.map(t => (
+                  <Link key={t.to} to={t.to} className={`px-3 h-9 inline-flex items-center rounded-md border ${location.pathname === t.to ? 'bg-accent/20' : ''}`}>
+                    {t.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setDark(v => !v)} className="text-sm px-3 h-9 rounded-md border">
+                {dark ? 'Light' : 'Dark'} mode
+              </button>
+              <button onClick={handleLogout} className="text-sm px-3 h-9 rounded-md border">
+                Logout
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Logo size="md" showText className="select-none" />
+          </div>
+        )}
       </header>
-      <main className="max-w-6xl mx-auto p-6">
+      <main className={`mx-auto p-6 ${isLogin ? 'max-w-lg' : 'max-w-6xl'}`}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<Protected><DashboardPage /></Protected>} />
