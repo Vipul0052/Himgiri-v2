@@ -339,25 +339,7 @@ export default async function handler(req: any, res: any) {
         return ok(res, { orders: data })
       }
 
-      case 'user.profile': {
-        const supabase = getSupabase()
-        const { user_id } = req.query || {}
-        if (!user_id) return bad(res, 'User ID required')
-        
-        const { data, error } = await supabase.from('users').select('id, email, name, created_at').eq('id', user_id).single()
-        if (error) return err(res, 'Failed to fetch user profile')
-        return ok(res, { user: data })
-      }
-
-      case 'user.update-profile': {
-        const supabase = getSupabase()
-        const { user_id, name, email } = req.body || {}
-        if (!user_id) return bad(res, 'User ID required')
-        
-        const { error } = await supabase.from('users').update({ name, email }).eq('id', user_id)
-        if (error) return err(res, 'Failed to update profile')
-        return ok(res, { ok: true })
-      }
+      /* merged into extended 'user.profile' and 'user.update-profile' below */
 
       // Order Tracking & Status Updates
       case 'order.update-status': {
