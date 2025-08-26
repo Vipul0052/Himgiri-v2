@@ -1,6 +1,5 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Logo } from '../../../components/Logo'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -35,9 +34,6 @@ export function LoginPage() {
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-card border rounded-lg p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-2">
-          <Logo size="md" showText className="select-none" />
-        </div>
         <h1 className="text-lg font-semibold mb-6">Welcome to Himgiri Naturals admin</h1>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">

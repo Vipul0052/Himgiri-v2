@@ -1,9 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export function InventoryPage() {
+  const navigate = useNavigate()
   const [items, setItems] = React.useState<any[]>([])
   const [productId, setProductId] = React.useState<number>(0)
   const [stock, setStock] = React.useState<number>(0)
+
+  function goBack() { navigate('/') }
 
   async function load() {
     const r = await fetch('/api/admin?action=inventory.list', { credentials: 'include' })
@@ -24,18 +28,21 @@ export function InventoryPage() {
   }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Inventory</h2>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <button onClick={goBack} className="px-3 h-9 inline-flex items-center rounded-md border hover:bg-accent/10">Back</button>
+        <h2 className="text-xl font-semibold">Inventory</h2>
+      </div>
 
-      <form onSubmit={setInventory} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 }}>
-        <input placeholder="Product ID" type="number" value={productId} onChange={e => setProductId(parseInt(e.target.value || '0', 10))} required />
-        <input placeholder="Stock" type="number" value={stock} onChange={e => setStock(parseInt(e.target.value || '0', 10))} required />
-        <button type="submit">Set</button>
+      <form onSubmit={setInventory} className="flex flex-wrap gap-3 items-center bg-card border rounded-lg p-4">
+        <input placeholder="Product ID" type="number" className="rounded-md border px-3 py-2" value={productId} onChange={e => setProductId(parseInt(e.target.value || '0', 10))} required />
+        <input placeholder="Stock" type="number" className="rounded-md border px-3 py-2" value={stock} onChange={e => setStock(parseInt(e.target.value || '0', 10))} required />
+        <button type="submit" className="px-4 h-9 rounded-md bg-primary text-primary-foreground">Set</button>
       </form>
 
-      <ul>
+      <ul className="space-y-2">
         {items.map(i => (
-          <li key={i.product_id}>Product #{i.product_id} - Stock: {i.stock}</li>
+          <li key={i.product_id} className="bg-card border rounded-lg p-3">Product #{i.product_id} - Stock: {i.stock}</li>
         ))}
       </ul>
     </div>
