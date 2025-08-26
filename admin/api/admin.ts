@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { SignJWT, jwtVerify } from 'jose'
+import nodemailer from 'nodemailer'
 
 const ADMIN_COOKIE = 'himgiri_admin_session'
 
@@ -8,6 +9,15 @@ function getSupabase() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE
   if (!supabaseUrl || !serviceRoleKey) throw new Error('Server not configured')
   return createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } })
+}
+
+function getMailer() {
+  const smtpUser = process.env.SMTP_USER
+  const smtpPass = process.env.SMTP_PASS
+  const smtpFrom = process.env.SMTP_FROM || smtpUser
+  if (!smtpUser || !smtpPass) throw new Error('Email is not configured')
+  const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: smtpUser, pass: smtpPass } })
+  return { transporter, smtpFrom }
 }
 
 function ok(res: any, body: any) { res.status(200).json(body) }
@@ -159,6 +169,34 @@ export default async function handler(req: any, res: any) {
         if (shipping_updates) updateData.shipping_updates = shipping_updates
         const { error } = await supabase.from('orders').update(updateData).eq('id', id)
         if (error) return err(res, 'Failed to update order')
+        // Send email notification to the customer
+        try {
+          const { data: order } = await supabase.from('orders').select('email, name, status, tracking_number').eq('id', id).single()
+          if (order?.email) {
+            const { transporter, smtpFrom } = getMailer()
+            const statusTitle = String(status).toUpperCase()
+            const tracking = tracking_number || (order as any).tracking_number
+            const html = `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <h1 style="color: #2d5a27; margin: 0;">🌿 Himgiri Naturals</h1>
+                </div>
+                <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
+                  <h2 style="color: #2d5a27; margin-bottom: 20px;">Order Status Update: ${statusTitle}</h2>
+                  <p style="color: #555; line-height: 1.6; margin-bottom: 15px;">Hello ${order.name || 'Customer'},</p>
+                  <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">Your order status has been updated to <strong style="color: #2d5a27;">${statusTitle}</strong>.</p>
+                  ${tracking ? `<p style="color: #555; line-height: 1.6; margin-bottom: 20px;"><strong>Tracking Number:</strong> ${tracking}</p>` : ''}
+                  <p style="color: #555; line-height: 1.6;">Thank you for choosing Himgiri Naturals!</p>
+                </div>
+                <div style="text-align: center; margin-top: 30px; color: #888; font-size: 14px;">
+                  <p>© 2025 Himgiri Naturals. All rights reserved.</p>
+                </div>
+              </div>`
+            await transporter.sendMail({ from: smtpFrom, to: order.email, subject: `Order Status Update - ${statusTitle}`, html })
+          }
+        } catch (e) {
+          console.error('order status email failed:', e)
+        }
         return ok(res, { ok: true })
       }
 

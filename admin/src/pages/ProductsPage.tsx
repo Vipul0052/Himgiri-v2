@@ -28,29 +28,39 @@ export function ProductsPage() {
   }
 
   React.useEffect(() => { load() }, [])
+  React.useEffect(() => {
+    const t = setInterval(load, 5000)
+    return () => clearInterval(t)
+  }, [])
 
   async function saveProduct(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     try {
+      let productId = form.id
       if (form.id) {
         const r = await fetch('/api/admin?action=products.update', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
           body: JSON.stringify({ id: form.id, name: form.name, description: form.description, price: form.price, image: form.image, category: form.category, in_stock: form.in_stock })
         })
         if (!r.ok) return
+        const jr = await r.json().catch(() => ({}))
+        productId = jr?.product?.id || form.id
       } else {
         const r = await fetch('/api/admin?action=products.create', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
           body: JSON.stringify({ name: form.name, description: form.description, price: form.price, image: form.image, category: form.category, in_stock: form.in_stock })
         })
         if (!r.ok) return
+        const jr = await r.json().catch(() => ({}))
+        productId = jr?.product?.id
       }
-      // Set inventory stock if provided
-      await fetch('/api/admin?action=inventory.set', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ product_id: form.id, stock: form.stock })
-      }).catch(() => {})
+      if (productId && form.stock >= 0) {
+        await fetch('/api/admin?action=inventory.set', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify({ product_id: productId, stock: form.stock })
+        }).catch(() => {})
+      }
       setForm({ name: '', description: '', price: 0, image: '', category: '', in_stock: true, stock: 0 })
       load()
     } finally { setLoading(false) }
