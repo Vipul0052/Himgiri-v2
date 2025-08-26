@@ -2,12 +2,22 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 
 export function DashboardPage() {
+  function goBack() {
+    if (window.history.length > 1) {
+      window.history.back()
+    } else {
+      window.location.href = '/'
+    }
+  }
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Himgiri Admin</h1>
-          <p className="text-sm text-muted-foreground">Manage products, orders, users and inventory</p>
+        <div className="flex items-center gap-2">
+          <button onClick={goBack} className="px-3 h-9 inline-flex items-center rounded-md border">Back</button>
+          <div>
+            <h1 className="text-2xl font-semibold">Himgiri Admin</h1>
+            <p className="text-sm text-muted-foreground">Manage products, orders, users and inventory</p>
+          </div>
         </div>
         <nav className="flex gap-2">
           <Link to="/products" className="px-3 h-9 inline-flex items-center rounded-md border">Products</Link>

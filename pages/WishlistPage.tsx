@@ -174,7 +174,7 @@ export function WishlistPage({ onNavigate }: WishlistPageProps) {
                       variant="ghost"
                       size="sm"
                       className="absolute top-2 right-2 bg-white/90 hover:bg-white text-red-600 hover:text-red-700"
-                      onClick={() => removeFromWishlist(item.product_data.id)}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeFromWishlist(item.product_data.id); }}
                     >
                       <Heart className="h-4 w-4 fill-current" />
                     </Button>
