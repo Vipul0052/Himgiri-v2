@@ -38,14 +38,24 @@ function Protected({ children }: { children: React.ReactNode }) {
 
 export function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<Protected><DashboardPage /></Protected>} />
-      <Route path="/products" element={<Protected><ProductsPage /></Protected>} />
-      <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
-      <Route path="/users" element={<Protected><UsersPage /></Protected>} />
-      <Route path="/inventory" element={<Protected><InventoryPage /></Protected>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="flex items-center gap-3">
+          <img src="/logo-himgiri.svg" alt="Himgiri Naturals" className="h-7" />
+          <span className="font-semibold">Admin</span>
+        </div>
+      </header>
+      <main className="max-w-6xl mx-auto p-6">
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<Protected><DashboardPage /></Protected>} />
+          <Route path="/products" element={<Protected><ProductsPage /></Protected>} />
+          <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
+          <Route path="/users" element={<Protected><UsersPage /></Protected>} />
+          <Route path="/inventory" element={<Protected><InventoryPage /></Protected>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    </div>
   )
 }
