@@ -37,6 +37,10 @@ function Protected({ children }: { children: React.ReactNode }) {
 }
 
 export function App() {
+  const [dark, setDark] = React.useState(false)
+  React.useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark)
+  }, [dark])
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="flex items-center justify-between px-6 py-4 border-b">
@@ -44,6 +48,9 @@ export function App() {
           <img src="/logo-himgiri.svg" alt="Himgiri Naturals" className="h-7" />
           <span className="font-semibold">Admin</span>
         </div>
+        <button onClick={() => setDark(v => !v)} className="text-sm px-3 h-9 rounded-md border">
+          {dark ? 'Light' : 'Dark'} mode
+        </button>
       </header>
       <main className="max-w-6xl mx-auto p-6">
         <Routes>
