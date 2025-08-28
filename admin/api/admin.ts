@@ -135,22 +135,46 @@ export default async function handler(req: any, res: any) {
       case 'products.list': {
         await requireAdmin(req, res)
         const supabase = getSupabase()
-        const { data, error } = await supabase.from('products').select('id, name, in_stock, updated_at').order('updated_at', { ascending: false })
+        const { data: base, error } = await supabase.from('products').select('id, name, in_stock, updated_at').order('updated_at', { ascending: false })
         if (error) return err(res, 'Failed to fetch products')
-        return ok(res, { products: data })
+        const ids = (base || []).map((p: any) => p.id)
+        let inventory: any[] = []
+        let meta: any[] = []
+        try {
+          const { data: inv } = await supabase.from('inventory').select('product_id, stock')
+          inventory = inv || []
+        } catch {}
+        try {
+          const { data: m } = await supabase.from('product_meta').select('product_id, price, image, category, description')
+          meta = m || []
+        } catch {}
+        const inventoryMap = new Map(inventory.map((r: any) => [r.product_id, r.stock]))
+        const metaMap = new Map(meta.map((r: any) => [r.product_id, r]))
+        const merged = (base || []).map((p: any) => ({
+          ...p,
+          stock: inventoryMap.get(p.id) ?? null,
+          meta: metaMap.get(p.id) || null,
+        }))
+        return ok(res, { products: merged })
       }
       case 'products.create': {
         const admin = await requireAdmin(req, res); if (!admin) return
-        const { name, in_stock = true } = req.body || {}
+        const { name, in_stock = true, meta } = req.body || {}
         if (!name) return bad(res, 'Name required')
         const supabase = getSupabase()
         const { data, error } = await supabase.from('products').insert([{ name, in_stock }]).select('id, name, in_stock, updated_at').single()
         if (error) return err(res, 'Failed to create product')
+        // Optionally create meta row
+        try {
+          if (meta && data?.id) {
+            await supabase.from('product_meta').upsert([{ product_id: data.id, ...meta }], { onConflict: 'product_id' })
+          }
+        } catch {}
         return ok(res, { product: data })
       }
       case 'products.update': {
         const admin = await requireAdmin(req, res); if (!admin) return
-        const { id, name, in_stock } = req.body || {}
+        const { id, name, in_stock, meta } = req.body || {}
         if (!id) return bad(res, 'Product ID required')
         const supabase = getSupabase()
         const payload: any = {}
@@ -158,7 +182,22 @@ export default async function handler(req: any, res: any) {
         if (in_stock !== undefined) payload.in_stock = in_stock
         const { data, error } = await supabase.from('products').update(payload).eq('id', id).select('id, name, in_stock, updated_at').single()
         if (error) return err(res, 'Failed to update product')
+        // Optionally update meta
+        try {
+          if (meta) {
+            await supabase.from('product_meta').upsert([{ product_id: id, ...meta }], { onConflict: 'product_id' })
+          }
+        } catch {}
         return ok(res, { product: data })
+      }
+      case 'products.set-meta': {
+        const admin = await requireAdmin(req, res); if (!admin) return
+        const { product_id, price, image, category, description } = req.body || {}
+        if (!product_id) return bad(res, 'product_id required')
+        const supabase = getSupabase()
+        const { data, error } = await supabase.from('product_meta').upsert([{ product_id, price, image, category, description }], { onConflict: 'product_id' }).select('*').single()
+        if (error) return err(res, 'Failed to set product meta')
+        return ok(res, { meta: data })
       }
       case 'products.delete': {
         const admin = await requireAdmin(req, res); if (!admin) return

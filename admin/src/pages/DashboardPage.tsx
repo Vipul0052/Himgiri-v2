@@ -2,6 +2,30 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 
 export function DashboardPage() {
+  const [totals, setTotals] = React.useState<{ totalRevenue: number; totalOrders: number }>({ totalRevenue: 0, totalOrders: 0 })
+  const [recent, setRecent] = React.useState<any[]>([])
+
+  async function load() {
+    try {
+      const a = await fetch('/api/admin?action=analytics.overview', { credentials: 'include' })
+      if (a.ok) {
+        const j = await a.json()
+        setTotals({ totalRevenue: j.totalRevenue || 0, totalOrders: j.totalOrders || 0 })
+      }
+      const o = await fetch('/api/admin?action=orders.list', { credentials: 'include' })
+      if (o.ok) {
+        const j = await o.json()
+        setRecent((j.orders || []).slice(0, 5))
+      }
+    } catch {}
+  }
+
+  React.useEffect(() => { load() }, [])
+  React.useEffect(() => {
+    const t = setInterval(load, 10000)
+    return () => clearInterval(t)
+  }, [])
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -20,11 +44,11 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-card border rounded-lg p-4">
           <div className="text-sm text-muted-foreground">Total Sales</div>
-          <div className="text-2xl font-semibold mt-1">₹ —</div>
+          <div className="text-2xl font-semibold mt-1">₹ {totals.totalRevenue.toLocaleString()}</div>
         </div>
         <div className="bg-card border rounded-lg p-4">
           <div className="text-sm text-muted-foreground">Orders</div>
-          <div className="text-2xl font-semibold mt-1">—</div>
+          <div className="text-2xl font-semibold mt-1">{totals.totalOrders}</div>
         </div>
         <div className="bg-card border rounded-lg p-4">
           <div className="text-sm text-muted-foreground">Products</div>
@@ -38,7 +62,17 @@ export function DashboardPage() {
 
       <div className="bg-card border rounded-lg p-4">
         <h2 className="text-lg font-semibold mb-3">Recent Orders</h2>
-        <div className="text-sm text-muted-foreground">Coming soon</div>
+        <ul className="space-y-2">
+          {recent.map(r => (
+            <li key={r.id} className="flex items-center justify-between">
+              <div className="text-sm">#{r.id} • {r.email || '—'} • ₹{r.amount}</div>
+              <div className="text-xs text-muted-foreground">{r.status}</div>
+            </li>
+          ))}
+          {recent.length === 0 && (
+            <div className="text-sm text-muted-foreground">No orders yet</div>
+          )}
+        </ul>
       </div>
     </div>
   )
