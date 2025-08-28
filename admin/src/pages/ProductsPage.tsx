@@ -193,6 +193,9 @@ export function ProductsPage() {
                   {typeof p.meta?.price === 'number' ? ` • ₹${p.meta.price}` : ''}
                   {p.meta?.category ? ` • ${p.meta.category}` : ''}
                 </div>
+                {p.in_stock && typeof p.stock === 'number' && p.stock < 10 && p.stock > 0 && (
+                  <div className="text-xs text-orange-600 font-medium mt-1">⚠️ Only {p.stock} left!</div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">

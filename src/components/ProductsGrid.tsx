@@ -19,6 +19,7 @@ interface Product {
   category: string | null;
   inStock: boolean;
   badges?: string[];
+  stock?: number; // Added stock property
 }
 
 interface ProductsGridProps {
@@ -107,6 +108,7 @@ export function ProductsGrid({ title = "Our Products", limit, category }: Produc
         category: p.category,
         inStock: Boolean(p.in_stock), // Convert in_stock to inStock
         badges,
+        stock: p.stock, // Add stock property
       }
     })
     if (category) arr = arr.filter(p => p.category === category)
@@ -192,7 +194,14 @@ export function ProductsGrid({ title = "Our Products", limit, category }: Produc
                         <span className="text-sm text-muted-foreground line-through">₹{product.originalPrice}</span>
                       )}
                     </div>
-                    <span className="text-xs text-green-600 font-medium">{product.inStock ? 'In Stock' : 'Out of Stock'}</span>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`text-xs font-medium ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
+                        {product.inStock ? 'In Stock' : 'Out of Stock'}
+                      </span>
+                      {product.inStock && typeof product.stock === 'number' && product.stock < 10 && product.stock > 0 && (
+                        <span className="text-xs text-orange-600 font-medium">Only {product.stock} left!</span>
+                      )}
+                    </div>
                   </div>
 
                   <Button onClick={() => handleAddToCart(product)} className="w-full" size="sm" disabled={product.price == null || !product.inStock}>

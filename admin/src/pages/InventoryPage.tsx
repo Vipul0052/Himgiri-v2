@@ -4,16 +4,27 @@ import { useNavigate } from 'react-router-dom'
 export function InventoryPage() {
   const navigate = useNavigate()
   const [items, setItems] = React.useState<any[]>([])
+  const [products, setProducts] = React.useState<any[]>([])
   const [productId, setProductId] = React.useState<number>(0)
   const [stock, setStock] = React.useState<number>(0)
 
   function goBack() { navigate('/') }
 
   async function load() {
-    const r = await fetch('/api/admin?action=inventory.list', { credentials: 'include' })
-    if (!r.ok) return setItems([])
-    const j = await r.json()
-    setItems(j.inventory || [])
+    const [inventoryRes, productsRes] = await Promise.all([
+      fetch('/api/admin?action=inventory.list', { credentials: 'include' }),
+      fetch('/api/admin?action=products.list', { credentials: 'include' })
+    ])
+    
+    if (inventoryRes.ok) {
+      const j = await inventoryRes.json()
+      setItems(j.inventory || [])
+    }
+    
+    if (productsRes.ok) {
+      const j = await productsRes.json()
+      setProducts(j.products || [])
+    }
   }
 
   React.useEffect(() => { load() }, [])
@@ -25,6 +36,11 @@ export function InventoryPage() {
       body: JSON.stringify({ product_id: productId, stock })
     })
     if (r.ok) { setProductId(0); setStock(0); load() }
+  }
+
+  function getProductName(productId: number) {
+    const product = products.find(p => p.id === productId)
+    return product?.name || `Product #${productId}`
   }
 
   return (
@@ -41,9 +57,31 @@ export function InventoryPage() {
       </form>
 
       <ul className="space-y-2">
-        {items.map(i => (
-          <li key={i.product_id} className="bg-card border rounded-lg p-3">Product #{i.product_id} - Stock: {i.stock}</li>
-        ))}
+        {items.map(i => {
+          const isLowStock = i.stock < 10 && i.stock > 0
+          const isOutOfStock = i.stock === 0
+          return (
+            <li key={i.product_id} className={`bg-card border rounded-lg p-3 ${isLowStock ? 'border-orange-200 bg-orange-50' : isOutOfStock ? 'border-red-200 bg-red-50' : ''}`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">{getProductName(i.product_id)}</div>
+                  <div className="text-sm text-muted-foreground">Stock: {i.stock}</div>
+                  {isLowStock && (
+                    <div className="text-xs text-orange-600 font-medium mt-1">⚠️ Low stock warning</div>
+                  )}
+                  {isOutOfStock && (
+                    <div className="text-xs text-red-600 font-medium mt-1">🚫 Out of stock</div>
+                  )}
+                </div>
+                <div className="text-right">
+                  <div className={`text-lg font-bold ${isLowStock ? 'text-orange-600' : isOutOfStock ? 'text-red-600' : 'text-green-600'}`}>
+                    {i.stock}
+                  </div>
+                </div>
+              </div>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )
