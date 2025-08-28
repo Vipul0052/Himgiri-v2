@@ -8,8 +8,9 @@ import { Label } from '../components/ui/label';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Separator } from '../components/ui/separator';
-import { ArrowLeft, CreditCard, Smartphone, Truck, Shield, MapPin } from 'lucide-react';
+import { ArrowLeft, CreditCard, Smartphone, Truck, Shield, MapPin, Plus } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { AddressForm, AddressData } from '../components/AddressForm';
 
 interface CheckoutPageProps { onNavigate: (page: string) => void; }
 
@@ -60,9 +61,16 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
   const [shippingInfo, setShippingInfo] = useState({
     fullName: user?.name || '',
     email: user?.email || '',
-    phone: '', address: '', city: '', state: '', pincode: '', saveAddress: false
+    phone: '', 
+    address: '', 
+    city: '', 
+    state: '', 
+    pincode: '', 
+    saveAddress: false
   });
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
   
   // Load saved addresses when component mounts
   useEffect(() => {
@@ -102,6 +110,59 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
         pincode: selectedAddress.pincode,
         saveAddress: false // Don't save an already saved address
       }));
+    }
+  };
+
+  const handleAddNewAddress = async (addressData: AddressData) => {
+    setIsAddingAddress(true);
+    try {
+      // Update shipping info with new address
+      setShippingInfo(prev => ({
+        ...prev,
+        fullName: addressData.full_name,
+        phone: addressData.phone,
+        address: addressData.address,
+        city: addressData.city,
+        state: addressData.state,
+        pincode: addressData.pincode,
+        saveAddress: true // Mark to save this new address
+      }));
+
+      // Save address to user's address book
+      if (user) {
+        const addressPayload = {
+          user_id: user.id,
+          type: addressData.type,
+          full_name: addressData.full_name,
+          phone: addressData.phone,
+          address: addressData.address,
+          city: addressData.city,
+          state: addressData.state,
+          pincode: addressData.pincode,
+          is_default: addressData.is_default
+        };
+
+        const addressResp = await fetch('/api/app?action=user.add-address', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(addressPayload)
+        });
+
+        if (addressResp.ok) {
+          showToast('Address saved successfully!', 'success');
+          await loadSavedAddresses(); // Reload saved addresses
+        } else {
+          console.error('Failed to save address to address book');
+          showToast('Address saved for checkout but failed to save to address book', 'warning');
+        }
+      }
+
+      setShowAddressForm(false);
+    } catch (error) {
+      console.error('Error adding new address:', error);
+      showToast('Failed to add address', 'error');
+    } finally {
+      setIsAddingAddress(false);
     }
   };
 
@@ -305,11 +366,26 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><MapPin className="w-5 h-5" /> Shipping Information</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5" /> 
+                  Shipping Information
+                  {user && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAddressForm(true)}
+                      className="ml-auto"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add New Address
+                    </Button>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Saved Addresses Dropdown */}
-                {user && (
+                {user && savedAddresses.length > 0 && (
                   <div>
                     <Label htmlFor="savedAddresses">Use Saved Address</Label>
                     <select
@@ -328,54 +404,107 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
                   </div>
                 )}
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="fullName">Full Name *</Label>
-                    <Input id="fullName" value={shippingInfo.fullName} onChange={(e) => handleInputChange('fullName', e.target.value)} placeholder="Enter your full name" />
+                {/* Manual Address Form */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="fullName">Full Name *</Label>
+                      <Input 
+                        id="fullName" 
+                        value={shippingInfo.fullName} 
+                        onChange={(e) => handleInputChange('fullName', e.target.value)} 
+                        placeholder="Enter your full name" 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Email *</Label>
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        value={shippingInfo.email} 
+                        onChange={(e) => handleInputChange('email', e.target.value)} 
+                        placeholder="your@email.com" 
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="email">Email *</Label>
-                    <Input id="email" type="email" value={shippingInfo.email} onChange={(e) => handleInputChange('email', e.target.value)} placeholder="your@email.com" />
-                  </div>
+                  
                   <div>
                     <Label htmlFor="phone">Phone Number *</Label>
-                    <Input id="phone" value={shippingInfo.phone} onChange={(e) => handleInputChange('phone', e.target.value)} placeholder="+91 98765 43210" />
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
+                        +91
+                      </span>
+                      <Input 
+                        id="phone" 
+                        value={shippingInfo.phone} 
+                        onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, '').slice(0, 10))} 
+                        placeholder="98765 43210"
+                        className="pl-12"
+                        maxLength={10}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter 10-digit mobile number without +91
+                    </p>
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="address">Address *</Label>
-                  <Input id="address" value={shippingInfo.address} onChange={(e) => handleInputChange('address', e.target.value)} placeholder="Street address" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  
                   <div>
-                    <Label htmlFor="city">City *</Label>
-                    <Input id="city" value={shippingInfo.city} onChange={(e) => handleInputChange('city', e.target.value)} placeholder="City" />
-                  </div>
-                  <div>
-                    <Label htmlFor="state">State *</Label>
-                    <Input id="state" value={shippingInfo.state} onChange={(e) => handleInputChange('state', e.target.value)} placeholder="State" />
-                  </div>
-                  <div>
-                    <Label htmlFor="pincode">Pincode *</Label>
-                    <Input id="pincode" value={shippingInfo.pincode} onChange={(e) => handleInputChange('pincode', e.target.value)} placeholder="110001" />
-                  </div>
-                </div>
-                
-                {/* Save Address Option */}
-                {user && (
-                  <div className="flex items-center space-x-2 pt-2">
-                    <input
-                      type="checkbox"
-                      id="saveAddress"
-                      checked={shippingInfo.saveAddress}
-                      onChange={(e) => handleInputChange('saveAddress', e.target.checked)}
-                      className="rounded border-gray-300"
+                    <Label htmlFor="address">Complete Address *</Label>
+                    <Input 
+                      id="address" 
+                      value={shippingInfo.address} 
+                      onChange={(e) => handleInputChange('address', e.target.value)} 
+                      placeholder="House/Flat number, Street, Area, Landmark" 
                     />
-                    <Label htmlFor="saveAddress" className="text-sm">
-                      Save this address to my address book for future orders
-                    </Label>
                   </div>
-                )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="city">City *</Label>
+                      <Input 
+                        id="city" 
+                        value={shippingInfo.city} 
+                        onChange={(e) => handleInputChange('city', e.target.value)} 
+                        placeholder="City" 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="state">State *</Label>
+                      <Input 
+                        id="state" 
+                        value={shippingInfo.state} 
+                        onChange={(e) => handleInputChange('state', e.target.value)} 
+                        placeholder="State" 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="pincode">Pincode *</Label>
+                      <Input 
+                        id="pincode" 
+                        value={shippingInfo.pincode} 
+                        onChange={(e) => handleInputChange('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))} 
+                        placeholder="123456" 
+                        maxLength={6}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Save Address Option */}
+                  {user && (
+                    <div className="flex items-center space-x-2 pt-2">
+                      <input
+                        type="checkbox"
+                        id="saveAddress"
+                        checked={shippingInfo.saveAddress}
+                        onChange={(e) => handleInputChange('saveAddress', e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      <Label htmlFor="saveAddress" className="text-sm">
+                        Save this address to my address book for future orders
+                      </Label>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
@@ -449,6 +578,17 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
           </div>
         </div>
       </div>
+
+      {showAddressForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <AddressForm
+            onSubmit={handleAddNewAddress}
+            onCancel={() => setShowAddressForm(false)}
+            isSubmitting={isAddingAddress}
+            title="Add New Address for Checkout"
+          />
+        </div>
+      )}
     </div>
   );
 }

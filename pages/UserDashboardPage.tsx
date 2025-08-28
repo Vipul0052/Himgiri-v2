@@ -7,6 +7,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Separator } from '../components/ui/separator';
+import { AddressForm, AddressData } from '../components/AddressForm';
 import { 
   User, 
   Package, 
@@ -113,6 +114,18 @@ export function UserDashboardPage({ onNavigate }: UserDashboardPageProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    type: 'home' as 'home' | 'work' | 'other',
+    full_name: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    pincode: '',
+    is_default: false
+  });
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   // Form states
@@ -126,17 +139,6 @@ export function UserDashboardPage({ onNavigate }: UserDashboardPageProps) {
     }
   });
   
-  const [addressForm, setAddressForm] = useState({
-    type: 'home' as const,
-    full_name: '',
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    pincode: '',
-    is_default: false
-  });
-
   useEffect(() => {
     if (user) {
       loadUserData();
@@ -217,39 +219,65 @@ export function UserDashboardPage({ onNavigate }: UserDashboardPageProps) {
     }
   };
 
-  const handleAddAddress = async () => {
+  const handleAddAddress = async (addressData: AddressData) => {
     if (!user) return;
     
     try {
       const resp = await fetch('/api/app?action=user.add-address', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
         body: JSON.stringify({
           user_id: user.id,
-          ...addressForm
+          ...addressData
         })
       });
       
       if (resp.ok) {
         showToast('Address added successfully!', 'success');
-        setIsAddingAddress(false);
-        setAddressForm({
-          type: 'home',
-          full_name: '',
-          phone: '',
-          address: '',
-          city: '',
-          state: '',
-          pincode: '',
-          is_default: false
-        });
+        setShowAddressForm(false);
+        setEditingAddress(null);
         await loadUserData(); // Reload data
       } else {
+        const errorText = await resp.text();
+        console.error('Address addition failed:', errorText);
         showToast('Failed to add address', 'error');
       }
     } catch (error) {
       console.error('Address addition failed:', error);
       showToast('Failed to add address', 'error');
+    }
+  };
+
+  const handleEditAddress = (address: Address) => {
+    setEditingAddress(address);
+    setShowAddressForm(true);
+  };
+
+  const handleUpdateAddress = async (addressData: AddressData) => {
+    if (!user || !editingAddress) return;
+    
+    try {
+      const resp = await fetch('/api/app?action=user.update-address', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          address_id: editingAddress.id,
+          user_id: user.id,
+          ...addressData
+        })
+      });
+      
+      if (resp.ok) {
+        showToast('Address updated successfully!', 'success');
+        setShowAddressForm(false);
+        setEditingAddress(null);
+        await loadUserData(); // Reload data
+      } else {
+        const errorText = await resp.text();
+        console.error('Address update failed:', errorText);
+        showToast('Failed to update address', 'error');
+      }
+    } catch (error) {
+      console.error('Address update failed:', error);
+      showToast('Failed to update address', 'error');
     }
   };
 
@@ -579,101 +607,13 @@ export function UserDashboardPage({ onNavigate }: UserDashboardPageProps) {
                     <CardTitle>Shipping Addresses</CardTitle>
                     <CardDescription>Manage your delivery addresses</CardDescription>
                   </div>
-                  <Button onClick={() => setIsAddingAddress(true)}>
+                  <Button onClick={() => setShowAddressForm(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Address
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                {isAddingAddress && (
-                  <div className="border rounded-lg p-4 mb-4">
-                    <h4 className="font-medium mb-4">Add New Address</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="address_type">Address Type</Label>
-                        <select
-                          id="address_type"
-                          value={addressForm.type}
-                          onChange={(e) => setAddressForm(prev => ({ ...prev, type: e.target.value as any }))}
-                          className="w-full p-2 border rounded-md"
-                        >
-                          <option value="home">Home</option>
-                          <option value="work">Work</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </div>
-                      <div>
-                        <Label htmlFor="address_full_name">Full Name</Label>
-                        <Input
-                          id="address_full_name"
-                          value={addressForm.full_name}
-                          onChange={(e) => setAddressForm(prev => ({ ...prev, full_name: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="address_phone">Phone</Label>
-                        <Input
-                          id="address_phone"
-                          value={addressForm.phone}
-                          onChange={(e) => setAddressForm(prev => ({ ...prev, phone: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="address_address">Street Address</Label>
-                        <Input
-                          id="address_address"
-                          value={addressForm.address}
-                          onChange={(e) => setAddressForm(prev => ({ ...prev, address: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="address_city">City</Label>
-                        <Input
-                          id="address_city"
-                          value={addressForm.city}
-                          onChange={(e) => setAddressForm(prev => ({ ...prev, city: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="address_state">State</Label>
-                        <Input
-                          id="address_state"
-                          value={addressForm.state}
-                          onChange={(e) => setAddressForm(prev => ({ ...prev, state: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="address_pincode">Pincode</Label>
-                        <Input
-                          id="address_pincode"
-                          value={addressForm.pincode}
-                          onChange={(e) => setAddressForm(prev => ({ ...prev, pincode: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2 mt-4">
-                      <input
-                        type="checkbox"
-                        id="address_default"
-                        checked={addressForm.is_default}
-                        onChange={(e) => setAddressForm(prev => ({ ...prev, is_default: e.target.checked }))}
-                      />
-                      <Label htmlFor="address_default">Set as default address</Label>
-                    </div>
-                    <div className="flex space-x-2 mt-4">
-                      <Button onClick={handleAddAddress}>
-                        <Save className="w-4 h-4 mr-2" />
-                        Add Address
-                      </Button>
-                      <Button variant="outline" onClick={() => setIsAddingAddress(false)}>
-                        <X className="w-4 h-4 mr-2" />
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
                 {profile?.addresses && profile.addresses.length > 0 ? (
                   <div className="space-y-4">
                     {profile.addresses.map((address) => (
@@ -703,9 +643,14 @@ export function UserDashboardPage({ onNavigate }: UserDashboardPageProps) {
                               </p>
                             </div>
                           </div>
-                          <Button variant="outline" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEditAddress(address)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button variant="outline" size="sm" className="text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -961,6 +906,21 @@ export function UserDashboardPage({ onNavigate }: UserDashboardPageProps) {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Address Form Modal */}
+      {showAddressForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <AddressForm
+            onSubmit={editingAddress ? handleUpdateAddress : handleAddAddress}
+            onCancel={() => {
+              setShowAddressForm(false);
+              setEditingAddress(null);
+            }}
+            initialData={editingAddress || undefined}
+            title={editingAddress ? "Edit Address" : "Add New Address"}
+          />
+        </div>
+      )}
     </div>
   );
 }
