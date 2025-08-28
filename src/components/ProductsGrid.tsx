@@ -27,6 +27,32 @@ interface ProductsGridProps {
   category?: string;
 }
 
+function deriveFromDescription(desc?: string) {
+  const result: Partial<Product> & { badges?: string[] } = {}
+  if (!desc) return result
+  const badges: string[] = []
+  const tagWords = ['Premium','Organic','Best Seller','Popular','Rare']
+  for (const w of tagWords) if (desc.includes(w) && !badges.includes(w)) badges.push(w)
+  const offMatch = desc.match(/(\d+)%\s*OFF/i)
+  if (offMatch) badges.push(`${offMatch[1]}% OFF`)
+  const ratingMatch = desc.match(/(\d+(?:\.\d+)?)\s*\((\d+)\)/)
+  if (ratingMatch) {
+    result.rating = parseFloat(ratingMatch[1])
+    result.reviews = parseInt(ratingMatch[2], 10)
+  }
+  const weightMatch = desc.match(/(\d+\s*(?:g|kg|ml|L))/i)
+  if (weightMatch) result.weight = weightMatch[1]
+  const priceArrows = desc.match(/₹\s*(\d+[\d\.]*)\s*→\s*₹\s*(\d+[\d\.]*)/)
+  if (priceArrows) {
+    const orig = parseFloat(priceArrows[1])
+    const now = parseFloat(priceArrows[2])
+    if (!Number.isNaN(orig)) result.originalPrice = orig
+    if (!Number.isNaN(now)) result.price = now
+  }
+  result.badges = badges.length ? badges : undefined
+  return result
+}
+
 export function ProductsGrid({ title = "Our Products", limit, category }: ProductsGridProps) {
   const { addItem } = useCart();
   const { showToast } = useToast();
@@ -35,7 +61,6 @@ export function ProductsGrid({ title = "Our Products", limit, category }: Produc
   const [items, setItems] = useState<any[]>([]);
 
   useEffect(() => {
-    // Hint the browser to connect early
     const link = document.createElement('link');
     link.rel = 'preconnect';
     link.href = 'https://images.unsplash.com';
@@ -62,19 +87,28 @@ export function ProductsGrid({ title = "Our Products", limit, category }: Produc
   }, []);
 
   const products: Product[] = useMemo(() => {
-    let arr = (items || []).map((p: any) => ({
-      id: String(p.id),
-      name: p.name,
-      price: p.price ?? null,
-      originalPrice: p.original_price ?? null,
-      image: p.image ?? null,
-      rating: undefined,
-      reviews: undefined,
-      weight: undefined,
-      category: p.category ?? null,
-      inStock: !!p.in_stock,
-      badges: Array.isArray(p.badges) ? p.badges : undefined,
-    })) as Product[];
+    let arr = (items || []).map((p: any) => {
+      const derived = deriveFromDescription(p.description)
+      const price = (typeof p.price === 'number' ? p.price : undefined) ?? derived.price ?? null
+      const originalPrice = derived.originalPrice ?? null
+      const rating = derived.rating
+      const reviews = derived.reviews
+      const weight = derived.weight
+      const badges = (Array.isArray(p.badges) ? p.badges : undefined) ?? derived.badges
+      return {
+        id: String(p.id),
+        name: p.name,
+        price,
+        originalPrice,
+        image: p.image ?? null,
+        rating,
+        reviews,
+        weight,
+        category: p.category ?? null,
+        inStock: !!p.in_stock,
+        badges,
+      } as Product
+    })
     if (category) arr = arr.filter(p => (p.category || '').toLowerCase() === category.toLowerCase());
     if (limit) arr = arr.slice(0, limit);
     return arr;
@@ -137,12 +171,14 @@ export function ProductsGrid({ title = "Our Products", limit, category }: Produc
                 <div className="p-4 space-y-3">
                   <div>
                     <h3 className="font-semibold text-sm mb-1 line-clamp-2 group-hover:text-primary transition-colors">{product.name}</h3>
-                    {product.category && <p className="text-xs text-muted-foreground">{product.category}</p>}
+                    {product.weight && <p className="text-xs text-muted-foreground">{product.weight}</p>}
                   </div>
 
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">{renderStars(product.rating)}</div>
-                    {product.reviews && <span className="text-xs text-muted-foreground">{product.reviews}</span>}
+                    {product.rating != null && product.reviews != null && (
+                      <span className="text-xs text-muted-foreground">{product.rating} ({product.reviews})</span>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -155,9 +191,9 @@ export function ProductsGrid({ title = "Our Products", limit, category }: Produc
                     <span className="text-xs text-green-600 font-medium">{product.inStock ? 'In Stock' : 'Out of Stock'}</span>
                   </div>
 
-                  <Button onClick={() => handleAddToCart(product)} className="w-full" size="sm">
+                  <Button onClick={() => handleAddToCart(product)} className="w-full" size="sm" disabled={product.price == null}>
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Add to Cart
+                    {product.price == null ? 'Unavailable' : 'Add to Cart'}
                   </Button>
                 </div>
               </CardContent>
