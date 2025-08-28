@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
@@ -278,6 +278,10 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
       setTimeout(() => onNavigate(user ? 'orders' : 'home'), 1500);
     } catch { showToast('Failed to place order. Please try again.', 'error'); } finally { setIsProcessing(false); }
   };
+
+  useEffect(() => {
+    try { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }) } catch { window.scrollTo(0, 0) }
+  }, [])
 
   if (items.length === 0) return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">

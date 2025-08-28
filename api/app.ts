@@ -603,6 +603,40 @@ export default async function handler(req: any, res: any) {
         return ok(res, { success: true })
       }
 
+      // Public products
+      case 'products.list': {
+        const supabase = getSupabase()
+        const { data: base, error } = await supabase
+          .from('products')
+          .select('id, name, in_stock, updated_at')
+          .order('updated_at', { ascending: false })
+        if (error) return err(res, 'Failed to fetch products')
+        let inventory: any[] = []
+        let meta: any[] = []
+        try {
+          const { data: inv } = await supabase.from('inventory').select('product_id, stock')
+          inventory = inv || []
+        } catch {}
+        try {
+          const { data: m } = await supabase.from('product_meta').select('product_id, price, image, category, description, badges')
+          meta = m || []
+        } catch {}
+        const inventoryMap = new Map(inventory.map((r: any) => [r.product_id, r.stock]))
+        const metaMap = new Map(meta.map((r: any) => [r.product_id, r]))
+        const merged = (base || []).map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          in_stock: p.in_stock,
+          stock: inventoryMap.get(p.id) ?? null,
+          price: metaMap.get(p.id)?.price ?? null,
+          image: metaMap.get(p.id)?.image ?? null,
+          category: metaMap.get(p.id)?.category ?? null,
+          description: metaMap.get(p.id)?.description ?? null,
+          badges: metaMap.get(p.id)?.badges ?? null,
+        }))
+        return ok(res, { products: merged })
+      }
+
       case 'ping':
         return ok(res, { ok: true, method: req.method })
 
