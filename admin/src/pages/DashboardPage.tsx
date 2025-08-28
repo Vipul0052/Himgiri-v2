@@ -24,11 +24,14 @@ export function DashboardPage() {
   React.useEffect(() => { load() }, [])
   React.useEffect(() => {
     const t = setInterval(load, 10000)
-    const channel = supabase
-      .channel('admin-dashboard-orders')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => load())
-      .subscribe()
-    return () => { clearInterval(t); supabase.removeChannel(channel) }
+    let channel: any
+    if (supabase) {
+      channel = supabase
+        .channel('admin-dashboard-orders')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => load())
+        .subscribe()
+    }
+    return () => { clearInterval(t); if (channel && supabase) supabase.removeChannel(channel) }
   }, [])
 
   return (

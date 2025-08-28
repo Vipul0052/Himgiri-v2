@@ -30,13 +30,14 @@ export function ProductsPage() {
 
   React.useEffect(() => { load() }, [])
   React.useEffect(() => {
+    if (!supabase) return
     const channel = supabase
       .channel('admin-products')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'product_meta' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, () => load())
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => { supabase?.removeChannel(channel) }
   }, [])
 
   function toMetaPayload() {
