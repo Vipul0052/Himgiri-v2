@@ -181,19 +181,55 @@ export function ProductsPage() {
         </div>
       </div>
 
-      <form onSubmit={saveProduct} className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-card border rounded-lg p-4">
-        <input placeholder="Name" className="rounded-md border px-3 py-2" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-        <div className="flex items-center gap-2">
-          <input id="in_stock" type="checkbox" checked={form.in_stock} onChange={e => setForm({ ...form, in_stock: e.target.checked })} />
+      <form onSubmit={saveProduct} className="space-y-4 bg-card border rounded-lg p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-1 block">Product Name *</label>
+            <input placeholder="Enter product name" className="w-full rounded-md border px-3 py-2" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-1 block">Category</label>
+            <input placeholder="e.g., nuts, fruits, seeds" className="w-full rounded-md border px-3 py-2" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} />
+          </div>
         </div>
-        <input placeholder="Stock quantity" type="number" className="rounded-md border px-3 py-2" value={form.stock} onChange={e => setForm({ ...form, stock: parseInt(e.target.value || '0', 10) })} />
-        <input placeholder="Price (optional)" type="number" className="rounded-md border px-3 py-2" value={form.price ?? ''} onChange={e => setForm({ ...form, price: e.target.value === '' ? undefined : parseFloat(e.target.value) })} />
-        <input placeholder="MRP (for auto price)" type="number" className="rounded-md border px-3 py-2" value={form.mrp ?? ''} onChange={e => setForm({ ...form, mrp: e.target.value === '' ? undefined : parseFloat(e.target.value) })} />
-        <input placeholder="Discount % (for auto price)" type="number" className="rounded-md border px-3 py-2" value={form.discountPct ?? ''} onChange={e => setForm({ ...form, discountPct: e.target.value === '' ? undefined : parseFloat(e.target.value) })} />
-        <input placeholder="Image URL" className="rounded-md border px-3 py-2" value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} />
-        <input placeholder="Category" className="rounded-md border px-3 py-2" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} />
-        <textarea placeholder="Description" className="rounded-md border px-3 py-2 md:col-span-2" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-        <div className="md:col-span-2 flex gap-2">
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-1 block">Price (₹)</label>
+            <input placeholder="0.00" type="number" step="0.01" className="w-full rounded-md border px-3 py-2" value={form.price ?? ''} onChange={e => setForm({ ...form, price: e.target.value === '' ? undefined : parseFloat(e.target.value) })} />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-1 block">MRP (₹)</label>
+            <input placeholder="0.00" type="number" step="0.01" className="w-full rounded-md border px-3 py-2" value={form.mrp ?? ''} onChange={e => setForm({ ...form, mrp: e.target.value === '' ? undefined : parseFloat(e.target.value) })} />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-1 block">Discount %</label>
+            <input placeholder="0" type="number" min="0" max="100" step="0.01" className="w-full rounded-md border px-3 py-2" value={form.discountPct ?? ''} onChange={e => setForm({ ...form, discountPct: e.target.value === '' ? undefined : parseFloat(e.target.value) })} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-1 block">Stock Quantity</label>
+            <input placeholder="0" type="number" min="0" className="w-full rounded-md border px-3 py-2" value={form.stock} onChange={e => setForm({ ...form, stock: parseInt(e.target.value || '0', 10) })} />
+          </div>
+          <div className="flex items-center gap-2">
+            <input id="in_stock" type="checkbox" checked={form.in_stock} onChange={e => setForm({ ...form, in_stock: e.target.checked })} />
+            <label htmlFor="in_stock" className="text-sm">In stock</label>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-muted-foreground mb-1 block">Image URL</label>
+          <input placeholder="https://example.com/image.jpg" className="w-full rounded-md border px-3 py-2" value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-muted-foreground mb-1 block">Description</label>
+          <textarea placeholder="Enter detailed product description..." className="w-full rounded-md border px-3 py-2" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+        </div>
+
+        <div className="flex gap-2">
           <button type="submit" disabled={loading} className="px-4 h-9 rounded-md bg-primary text-primary-foreground">{form.id ? 'Update' : 'Create'} product</button>
           <button type="button" disabled={loading} onClick={() => setForm({ name: '', in_stock: true, stock: 0, price: undefined, mrp: undefined, discountPct: undefined, image: '', category: '', description: '' })} className="px-4 h-9 rounded-md border">Clear</button>
         </div>
