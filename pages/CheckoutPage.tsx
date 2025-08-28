@@ -114,6 +114,7 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
   };
 
   const handleAddNewAddress = async (addressData: AddressData) => {
+    console.log('Adding new address:', addressData);
     setIsAddingAddress(true);
     try {
       // Update shipping info with new address
@@ -130,6 +131,7 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
 
       // Save address to user's address book
       if (user) {
+        console.log('Saving address for user:', user.id);
         const addressPayload = {
           user_id: user.id,
           type: addressData.type,
@@ -142,17 +144,24 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
           is_default: addressData.is_default
         };
 
+        console.log('Address payload:', addressPayload);
+
         const addressResp = await fetch('/api/app?action=user.add-address', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(addressPayload)
         });
 
+        console.log('Address API response status:', addressResp.status);
+
         if (addressResp.ok) {
+          const responseData = await addressResp.json();
+          console.log('Address saved successfully:', responseData);
           showToast('Address saved successfully!', 'success');
           await loadSavedAddresses(); // Reload saved addresses
         } else {
-          console.error('Failed to save address to address book');
+          const errorText = await addressResp.text();
+          console.error('Failed to save address to address book:', addressResp.status, errorText);
           showToast('Address saved for checkout but failed to save to address book', 'warning');
         }
       }
@@ -232,7 +241,12 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
 
   // Function to save checkout address to user's address book
   const saveAddressToUserBook = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user logged in, cannot save address');
+      return;
+    }
+    
+    console.log('Saving checkout address to user book:', shippingInfo);
     
     try {
       // Check if this address already exists
@@ -240,6 +254,8 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
       if (existingAddressesResp.ok) {
         const profileData = await existingAddressesResp.json();
         const existingAddresses = profileData.profile?.addresses || [];
+        
+        console.log('Existing addresses:', existingAddresses);
         
         // Check if this exact address already exists
         const addressExists = existingAddresses.some((addr: any) => 
@@ -249,6 +265,8 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
           addr.pincode === shippingInfo.pincode &&
           addr.phone === shippingInfo.phone
         );
+        
+        console.log('Address already exists:', addressExists);
         
         if (!addressExists) {
           // Save new address to user's address book
@@ -264,19 +282,30 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
             is_default: existingAddresses.length === 0 // Make default if it's the first address
           };
           
+          console.log('Saving new address with payload:', addressPayload);
+          
           const addressResp = await fetch('/api/app?action=user.add-address', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(addressPayload)
           });
           
+          console.log('Address save response status:', addressResp.status);
+          
           if (addressResp.ok) {
-            console.log('Checkout address saved to user address book');
+            const responseData = await addressResp.json();
+            console.log('Checkout address saved to user address book:', responseData);
             showToast('Address saved to your address book for future orders!', 'success');
           } else {
-            console.error('Failed to save address to address book');
+            const errorText = await addressResp.text();
+            console.error('Failed to save address to address book:', addressResp.status, errorText);
+            showToast('Order placed but address not saved to address book', 'warning');
           }
+        } else {
+          console.log('Address already exists, not saving duplicate');
         }
+      } else {
+        console.error('Failed to fetch existing addresses:', existingAddressesResp.status);
       }
     } catch (error) {
       console.error('Error saving address to address book:', error);

@@ -494,37 +494,62 @@ export default async function handler(req: any, res: any) {
 
       // User Profile Management
       case 'user.profile': {
-        const supabase = getSupabase()
         const { user_id } = req.query || {}
         if (!user_id) return bad(res, 'User ID required')
         
-        const { data, error } = await supabase
+        console.log('Fetching profile for user:', user_id)
+        
+        const supabase = getSupabase()
+        
+        // Get user profile
+        const { data: user, error: userError } = await supabase
           .from('users')
-          .select(`
-            id, name, email, phone, created_at,
-            addresses(id, type, full_name, phone, address, city, state, pincode, is_default),
-            communication_preferences
-          `)
+          .select('id, name, email, phone, communication_preferences')
           .eq('id', user_id)
           .single()
         
-        if (error) {
-          console.error('Failed to fetch user profile:', error)
-          return err(res, 'Failed to fetch profile')
+        if (userError) {
+          console.error('Failed to fetch user profile:', userError)
+          return err(res, 'Failed to fetch user profile')
         }
         
-        return ok(res, { profile: data })
+        // Get user addresses
+        const { data: addresses, error: addressesError } = await supabase
+          .from('user_addresses')
+          .select('*')
+          .eq('user_id', user_id)
+          .order('is_default', { ascending: false })
+          .order('created_at', { ascending: false })
+        
+        if (addressesError) {
+          console.error('Failed to fetch user addresses:', addressesError)
+          // Don't fail completely if addresses fail
+        }
+        
+        const profile = {
+          ...user,
+          addresses: addresses || []
+        }
+        
+        console.log('Profile data:', profile)
+        
+        return ok(res, { profile })
       }
 
       case 'user.update-profile': {
-        const supabase = getSupabase()
         const { user_id, name, phone, communication_preferences } = req.body || {}
         if (!user_id) return bad(res, 'User ID required')
         
+        console.log('Updating profile for user:', user_id)
+        console.log('Update data:', { name, phone, communication_preferences })
+        
+        const supabase = getSupabase()
         const updateData: any = {}
         if (name !== undefined) updateData.name = name
         if (phone !== undefined) updateData.phone = phone
         if (communication_preferences !== undefined) updateData.communication_preferences = communication_preferences
+        
+        console.log('Final update payload:', updateData)
         
         const { data, error } = await supabase
           .from('users')
@@ -538,38 +563,53 @@ export default async function handler(req: any, res: any) {
           return err(res, 'Failed to update profile')
         }
         
+        console.log('Profile updated successfully:', data)
         return ok(res, { profile: data })
       }
 
       case 'user.add-address': {
-        const supabase = getSupabase()
         const { user_id, type, full_name, phone, address, city, state, pincode, is_default } = req.body || {}
         if (!user_id || !full_name || !phone || !address || !city || !state || !pincode) {
+          console.error('Missing required fields:', { user_id, full_name, phone, address, city, state, pincode })
           return bad(res, 'All address fields are required')
         }
         
+        console.log('Adding address for user:', user_id)
+        console.log('Address data:', { type, full_name, phone, address, city, state, pincode, is_default })
+        
+        const supabase = getSupabase()
+        
         // If this is the first address or marked as default, set it as default
         if (is_default) {
+          console.log('Setting as default address, removing default from others')
           // Remove default from other addresses
-          await supabase
+          const { error: defaultError } = await supabase
             .from('user_addresses')
             .update({ is_default: false })
             .eq('user_id', user_id)
+          
+          if (defaultError) {
+            console.error('Failed to remove default from other addresses:', defaultError)
+          }
         }
+        
+        const addressPayload = {
+          user_id,
+          type,
+          full_name,
+          phone,
+          address,
+          city,
+          state,
+          pincode,
+          is_default: is_default || false
+        }
+        
+        console.log('Inserting address with payload:', addressPayload)
         
         const { data, error } = await supabase
           .from('user_addresses')
-          .insert([{
-            user_id,
-            type,
-            full_name,
-            phone,
-            address,
-            city,
-            state,
-            pincode,
-            is_default: is_default || false
-          }])
+          .insert([addressPayload])
           .select()
           .single()
         
@@ -578,6 +618,7 @@ export default async function handler(req: any, res: any) {
           return err(res, 'Failed to add address')
         }
         
+        console.log('Address added successfully:', data)
         return ok(res, { address: data })
       }
 

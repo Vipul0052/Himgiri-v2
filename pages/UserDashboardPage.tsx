@@ -194,23 +194,41 @@ export function UserDashboardPage({ onNavigate }: UserDashboardPageProps) {
   };
 
   const handleProfileUpdate = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user logged in, cannot update profile');
+      return;
+    }
+    
+    console.log('Updating profile for user:', user.id);
+    console.log('Profile form data:', profileForm);
     
     try {
+      const updatePayload = {
+        user_id: user.id,
+        name: profileForm.name,
+        phone: profileForm.phone,
+        communication_preferences: profileForm.communication_preferences
+      };
+      
+      console.log('Profile update payload:', updatePayload);
+      
       const resp = await fetch('/api/app?action=user.update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          ...profileForm
-        })
+        body: JSON.stringify(updatePayload)
       });
       
+      console.log('Profile update response status:', resp.status);
+      
       if (resp.ok) {
+        const responseData = await resp.json();
+        console.log('Profile updated successfully:', responseData);
         showToast('Profile updated successfully!', 'success');
         setIsEditingProfile(false);
         await loadUserData(); // Reload data
       } else {
+        const errorText = await resp.text();
+        console.error('Profile update failed:', resp.status, errorText);
         showToast('Failed to update profile', 'error');
       }
     } catch (error) {

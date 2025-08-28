@@ -73,20 +73,10 @@ export function AddressForm({ onSubmit, onCancel, initialData, isSubmitting = fa
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof AddressData, string>>>({});
-  const [availableCities, setAvailableCities] = useState<string[]>([]);
 
   // Update available cities when state changes
   useEffect(() => {
-    if (formData.state && STATE_CITIES[formData.state]) {
-      setAvailableCities(STATE_CITIES[formData.state]);
-      // Auto-select city if it's not in the new state's city list
-      if (!STATE_CITIES[formData.state].includes(formData.city)) {
-        setFormData(prev => ({ ...prev, city: '' }));
-      }
-    } else {
-      setAvailableCities([]);
-      setFormData(prev => ({ ...prev, city: '' }));
-    }
+    // Removed city restriction logic - now allows custom cities
   }, [formData.state]);
 
   // Auto-fill city based on pincode (simplified logic)
@@ -293,22 +283,13 @@ export function AddressForm({ onSubmit, onCancel, initialData, isSubmitting = fa
 
             <div>
               <Label htmlFor="city">City *</Label>
-              <Select 
-                value={formData.city} 
-                onValueChange={(value) => handleInputChange('city', value)}
-                disabled={!formData.state}
-              >
-                <SelectTrigger className={errors.city ? 'border-red-500' : ''}>
-                  <SelectValue placeholder={formData.state ? "Select City" : "Select State First"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableCities.map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input 
+                id="city"
+                value={formData.city}
+                onChange={(e) => handleInputChange('city', e.target.value)}
+                placeholder="Enter your city"
+                className={errors.city ? 'border-red-500' : ''}
+              />
               {errors.city && <p className="text-sm text-red-500 mt-1">{errors.city}</p>}
             </div>
 
