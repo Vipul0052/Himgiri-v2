@@ -100,23 +100,27 @@ export function ProductsGrid({ title = "Our Products", limit, category }: Produc
         name: p.name,
         price,
         originalPrice,
-        image: p.image ?? null,
+        image: p.image,
         rating,
         reviews,
         weight,
-        category: p.category ?? null,
-        inStock: !!p.in_stock,
+        category: p.category,
+        inStock: Boolean(p.in_stock), // Convert in_stock to inStock
         badges,
-      } as Product
+      }
     })
-    if (category) arr = arr.filter(p => (p.category || '').toLowerCase() === category.toLowerCase());
-    if (limit) arr = arr.slice(0, limit);
+    if (category) arr = arr.filter(p => p.category === category)
+    if (limit) arr = arr.slice(0, limit)
     return arr;
   }, [items, category, limit]);
 
   const handleAddToCart = (product: Product) => {
     if (!product.price) {
       showToast('Product not available', 'error');
+      return;
+    }
+    if (!product.inStock) {
+      showToast('Product is out of stock', 'error');
       return;
     }
     addItem({ id: product.id, name: product.name, price: product.price, originalPrice: product.originalPrice || product.price, image: product.image || '', weight: product.weight || '', category: product.category || '' });
@@ -191,9 +195,9 @@ export function ProductsGrid({ title = "Our Products", limit, category }: Produc
                     <span className="text-xs text-green-600 font-medium">{product.inStock ? 'In Stock' : 'Out of Stock'}</span>
                   </div>
 
-                  <Button onClick={() => handleAddToCart(product)} className="w-full" size="sm" disabled={product.price == null}>
+                  <Button onClick={() => handleAddToCart(product)} className="w-full" size="sm" disabled={product.price == null || !product.inStock}>
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    {product.price == null ? 'Unavailable' : 'Add to Cart'}
+                    {product.price == null ? 'Unavailable' : !product.inStock ? 'Out of Stock' : 'Add to Cart'}
                   </Button>
                 </div>
               </CardContent>

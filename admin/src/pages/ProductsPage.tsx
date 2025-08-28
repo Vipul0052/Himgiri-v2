@@ -87,7 +87,8 @@ export function ProductsPage() {
         }).catch(() => {})
       }
       setForm({ name: '', in_stock: true, stock: 0, price: undefined, mrp: undefined, discountPct: undefined, image: '', category: '', description: '' })
-      load()
+      // Reload to get fresh data including updated stock
+      await load()
     } finally { setLoading(false) }
   }
 
