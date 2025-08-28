@@ -117,7 +117,7 @@ export function ProductsGrid({ title = "Our Products", limit, category }: Produc
             <Card key={product.id} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-sm hover:shadow-xl">
               <CardContent className="p-0">
                 <div className="relative overflow-hidden rounded-t-lg">
-                  <ImageWithFallback src={product.image || ''} alt={product.name} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <ImageWithFallback src={product.image || ''} alt={product.name} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
 
                   <div className="absolute top-3 left-3 flex flex-col gap-2">
                     {product.badges?.map((b, idx) => (

@@ -39,6 +39,7 @@ interface ShopByCategoryProps {
 }
 
 export function ShopByCategory({ onNavigate }: ShopByCategoryProps) {
+  const goShop = () => { try { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }) } catch { window.scrollTo(0, 0) }; onNavigate('shop') }
   return (
     <section className="py-16 px-4 bg-muted/30">
       <div className="container mx-auto">
@@ -56,7 +57,7 @@ export function ShopByCategory({ onNavigate }: ShopByCategoryProps) {
             <Card 
               key={category.id} 
               className="group cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden border-0"
-              onClick={() => onNavigate('shop')}
+              onClick={goShop}
             >
               <CardContent className="p-0">
                 <div className="relative h-48 overflow-hidden">
@@ -72,7 +73,7 @@ export function ShopByCategory({ onNavigate }: ShopByCategoryProps) {
                   <p className="text-sm text-muted-foreground mb-4">
                     {category.description}
                   </p>
-                  <Button variant="ghost" className="group-hover:bg-accent group-hover:text-accent-foreground">
+                  <Button variant="ghost" className="group-hover:bg-accent group-hover:text-accent-foreground" onClick={goShop}>
                     Explore
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
@@ -92,7 +93,7 @@ export function ShopByCategory({ onNavigate }: ShopByCategoryProps) {
           <Button 
             size="lg" 
             className="bg-accent hover:bg-accent/90"
-            onClick={() => onNavigate('shop')}
+            onClick={goShop}
           >
             Shop Himalayan Collection
           </Button>
