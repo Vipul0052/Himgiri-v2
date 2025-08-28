@@ -618,7 +618,7 @@ export default async function handler(req: any, res: any) {
           inventory = inv || []
         } catch {}
         try {
-          const { data: m } = await supabase.from('product_meta').select('product_id, price, image, category, description, badges, original_price')
+          const { data: m } = await supabase.from('product_meta').select('product_id, price, image, category, description')
           meta = m || []
         } catch {}
         const inventoryMap = new Map(inventory.map((r: any) => [r.product_id, r.stock]))
@@ -632,7 +632,7 @@ export default async function handler(req: any, res: any) {
         }
         const derive = (m: any) => {
           const derived: any = {}
-          const badges: string[] = Array.isArray(m?.badges) ? [...m.badges] : []
+          const badges: string[] = []
           const desc = String(m?.description || '')
           const tagWords = ['Premium','Organic','Best Seller','Popular','Rare']
           for (const w of tagWords) if (desc.includes(w) && !badges.includes(w)) badges.push(w)
@@ -657,7 +657,7 @@ export default async function handler(req: any, res: any) {
             in_stock: p.in_stock,
             stock: inventoryMap.get(p.id) ?? null,
             price: (m?.price ?? d.price) ?? null,
-            original_price: (m?.original_price ?? d.original_price) ?? null,
+            original_price: d.original_price ?? null,
             image: normalizeImage(m?.image) ?? null,
             category: m?.category ?? null,
             description: m?.description ?? null,
