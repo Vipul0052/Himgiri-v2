@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 
 interface ProductForm {
   id?: number
@@ -29,8 +30,13 @@ export function ProductsPage() {
 
   React.useEffect(() => { load() }, [])
   React.useEffect(() => {
-    const t = setInterval(load, 5000)
-    return () => clearInterval(t)
+    const channel = supabase
+      .channel('admin-products')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'product_meta' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, () => load())
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   function toMetaPayload() {

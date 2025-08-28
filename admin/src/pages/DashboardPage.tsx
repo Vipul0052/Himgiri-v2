@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 
 export function DashboardPage() {
   const [totals, setTotals] = React.useState<{ totalRevenue: number; totalOrders: number }>({ totalRevenue: 0, totalOrders: 0 })
@@ -23,7 +24,11 @@ export function DashboardPage() {
   React.useEffect(() => { load() }, [])
   React.useEffect(() => {
     const t = setInterval(load, 10000)
-    return () => clearInterval(t)
+    const channel = supabase
+      .channel('admin-dashboard-orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => load())
+      .subscribe()
+    return () => { clearInterval(t); supabase.removeChannel(channel) }
   }, [])
 
   return (
