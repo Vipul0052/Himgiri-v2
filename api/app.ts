@@ -537,89 +537,106 @@ export default async function handler(req: any, res: any) {
       }
 
       case 'user.update-profile': {
-        const { user_id, name, phone, communication_preferences } = req.body || {}
-        if (!user_id) return bad(res, 'User ID required')
-        
-        console.log('Updating profile for user:', user_id)
-        console.log('Update data:', { name, phone, communication_preferences })
-        
-        const supabase = getSupabase()
-        const updateData: any = {}
-        if (name !== undefined) updateData.name = name
-        if (phone !== undefined) updateData.phone = phone
-        if (communication_preferences !== undefined) updateData.communication_preferences = communication_preferences
-        
-        console.log('Final update payload:', updateData)
-        
-        const { data, error } = await supabase
-          .from('users')
-          .update(updateData)
-          .eq('id', user_id)
-          .select()
-          .single()
-        
-        if (error) {
-          console.error('Failed to update user profile:', error)
-          return err(res, 'Failed to update profile')
+        try {
+          const { user_id, name, phone, communication_preferences } = req.body || {}
+          if (!user_id) return bad(res, 'User ID required')
+          
+          console.log('Updating profile for user:', user_id)
+          console.log('Update data:', { name, phone, communication_preferences })
+          console.log('Request body:', req.body)
+          
+          const supabase = getSupabase()
+          const updateData: any = {}
+          if (name !== undefined) updateData.name = name
+          if (phone !== undefined) updateData.phone = phone
+          if (communication_preferences !== undefined) updateData.communication_preferences = communication_preferences
+          
+          console.log('Final update payload:', updateData)
+          
+          if (Object.keys(updateData).length === 0) {
+            console.log('No fields to update')
+            return bad(res, 'No fields to update')
+          }
+          
+          const { data, error } = await supabase
+            .from('users')
+            .update(updateData)
+            .eq('id', user_id)
+            .select()
+            .single()
+          
+          if (error) {
+            console.error('Supabase error updating user profile:', error)
+            return err(res, 'Failed to update profile', error)
+          }
+          
+          console.log('Profile updated successfully:', data)
+          return ok(res, { profile: data })
+        } catch (error) {
+          console.error('Unexpected error in profile update:', error)
+          return err(res, 'Unexpected error updating profile', error)
         }
-        
-        console.log('Profile updated successfully:', data)
-        return ok(res, { profile: data })
       }
 
       case 'user.add-address': {
-        const { user_id, type, full_name, phone, address, city, state, pincode, is_default } = req.body || {}
-        if (!user_id || !full_name || !phone || !address || !city || !state || !pincode) {
-          console.error('Missing required fields:', { user_id, full_name, phone, address, city, state, pincode })
-          return bad(res, 'All address fields are required')
-        }
-        
-        console.log('Adding address for user:', user_id)
-        console.log('Address data:', { type, full_name, phone, address, city, state, pincode, is_default })
-        
-        const supabase = getSupabase()
-        
-        // If this is the first address or marked as default, set it as default
-        if (is_default) {
-          console.log('Setting as default address, removing default from others')
-          // Remove default from other addresses
-          const { error: defaultError } = await supabase
-            .from('user_addresses')
-            .update({ is_default: false })
-            .eq('user_id', user_id)
-          
-          if (defaultError) {
-            console.error('Failed to remove default from other addresses:', defaultError)
+        try {
+          const { user_id, type, full_name, phone, address, city, state, pincode, is_default } = req.body || {}
+          if (!user_id || !full_name || !phone || !address || !city || !state || !pincode) {
+            console.error('Missing required fields:', { user_id, full_name, phone, address, city, state, pincode })
+            return bad(res, 'All address fields are required')
           }
-        }
-        
-        const addressPayload = {
-          user_id,
-          type,
-          full_name,
-          phone,
+          
+          console.log('Adding address for user:', user_id)
+          console.log('Address data:', { type, full_name, phone, address, city, state, pincode, is_default })
+          console.log('Request body:', req.body)
+          
+          const supabase = getSupabase()
+          
+          // If this is the first address or marked as default, set it as default
+          if (is_default) {
+            console.log('Setting as default address, removing default from others')
+            // Remove default from other addresses
+            const { error: defaultError } = await supabase
+              .from('user_addresses')
+              .update({ is_default: false })
+              .eq('user_id', user_id)
+            
+            if (defaultError) {
+              console.error('Failed to remove default from other addresses:', defaultError)
+            }
+          }
+          
+          const addressPayload = {
+            user_id,
+            type,
+            full_name,
+            phone,
           address,
-          city,
-          state,
-          pincode,
-          is_default: is_default || false
+            city,
+            state,
+            pincode,
+            is_default: is_default || false
+          }
+          
+          console.log('Inserting address with payload:', addressPayload)
+          
+          const { data, error } = await supabase
+            .from('user_addresses')
+            .insert([addressPayload])
+            .select()
+            .single()
+          
+          if (error) {
+            console.error('Supabase error adding address:', error)
+            return err(res, 'Failed to add address', error)
+          }
+          
+          console.log('Address added successfully:', data)
+          return ok(res, { address: data })
+        } catch (error) {
+          console.error('Unexpected error adding address:', error)
+          return err(res, 'Unexpected error adding address', error)
         }
-        
-        console.log('Inserting address with payload:', addressPayload)
-        
-        const { data, error } = await supabase
-          .from('user_addresses')
-          .insert([addressPayload])
-          .select()
-          .single()
-        
-        if (error) {
-          console.error('Failed to add address:', error)
-          return err(res, 'Failed to add address')
-        }
-        
-        console.log('Address added successfully:', data)
-        return ok(res, { address: data })
       }
 
       case 'user.update-address': {
@@ -759,6 +776,31 @@ export default async function handler(req: any, res: any) {
 
       case 'ping':
         return ok(res, { ok: true, method: req.method })
+
+      case 'debug.info': {
+        try {
+          const supabase = getSupabase()
+          // Test connection
+          const { data, error } = await supabase.from('users').select('count').limit(1)
+          
+          return ok(res, {
+            message: 'Debug info',
+            timestamp: new Date().toISOString(),
+            env: {
+              hasSupabaseUrl: !!process.env.SUPABASE_URL,
+              hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE,
+              hasSmtpUser: !!process.env.SMTP_USER,
+              hasSmtpPass: !!process.env.SMTP_PASS
+            },
+            supabase: {
+              connected: !error,
+              error: error ? error.message : null
+            }
+          })
+        } catch (error) {
+          return err(res, 'Debug endpoint failed', error)
+        }
+      }
 
       default:
         return bad(res, 'Unknown action')
