@@ -18,7 +18,7 @@ interface Product {
   weight?: string;
   category: string | null;
   inStock: boolean;
-  badge?: string;
+  badges?: string[];
 }
 
 interface ProductsGridProps {
@@ -35,11 +35,20 @@ export function ProductsGrid({ title = "Our Products", limit, category }: Produc
   const [items, setItems] = useState<any[]>([]);
 
   useEffect(() => {
+    // Hint the browser to connect early
+    const link = document.createElement('link');
+    link.rel = 'preconnect';
+    link.href = 'https://images.unsplash.com';
+    document.head.appendChild(link);
+    return () => { document.head.removeChild(link) }
+  }, [])
+
+  useEffect(() => {
     let cancelled = false;
     async function load() {
       setLoading(true);
       try {
-        const r = await fetch('/api/app?action=products.list');
+        const r = await fetch('/api/app?action=products.list', { headers: { 'cache-control': 'no-cache' } });
         const j = r.ok ? await r.json() : { products: [] };
         if (!cancelled) setItems(j.products || []);
       } catch {
@@ -57,14 +66,14 @@ export function ProductsGrid({ title = "Our Products", limit, category }: Produc
       id: String(p.id),
       name: p.name,
       price: p.price ?? null,
-      originalPrice: null,
+      originalPrice: p.original_price ?? null,
       image: p.image ?? null,
       rating: undefined,
       reviews: undefined,
       weight: undefined,
       category: p.category ?? null,
       inStock: !!p.in_stock,
-      badge: Array.isArray(p.badges) && p.badges.length > 0 ? String(p.badges[0]) : undefined,
+      badges: Array.isArray(p.badges) ? p.badges : undefined,
     })) as Product[];
     if (category) arr = arr.filter(p => (p.category || '').toLowerCase() === category.toLowerCase());
     if (limit) arr = arr.slice(0, limit);
@@ -111,9 +120,9 @@ export function ProductsGrid({ title = "Our Products", limit, category }: Produc
                   <ImageWithFallback src={product.image || ''} alt={product.name} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" />
 
                   <div className="absolute top-3 left-3 flex flex-col gap-2">
-                    {product.badge && (
-                      <Badge className="text-xs font-medium bg-primary text-primary-foreground">{product.badge}</Badge>
-                    )}
+                    {product.badges?.map((b, idx) => (
+                      <Badge key={idx} className={`text-xs font-medium ${b.includes('% OFF') ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-primary-foreground'}`}>{b}</Badge>
+                    ))}
                   </div>
 
                   <Button variant="ghost" size="sm" className="absolute top-3 right-3 w-8 h-8 p-0 bg-white/80 backdrop-blur hover:bg-white/90" onClick={() => toggleFavorite(product.id)}>

@@ -618,7 +618,7 @@ export default async function handler(req: any, res: any) {
           inventory = inv || []
         } catch {}
         try {
-          const { data: m } = await supabase.from('product_meta').select('product_id, price, image, category, description, badges')
+          const { data: m } = await supabase.from('product_meta').select('product_id, price, image, category, description, badges, original_price')
           meta = m || []
         } catch {}
         const inventoryMap = new Map(inventory.map((r: any) => [r.product_id, r.stock]))
@@ -628,23 +628,43 @@ export default async function handler(req: any, res: any) {
           let u = String(url).trim()
           if (!u) return null
           if (u.startsWith('//')) u = 'https:' + u
-          if (!/^https?:\/\//i.test(u)) return u // allow relative if you host images
           return u
+        }
+        const derive = (m: any) => {
+          const derived: any = {}
+          const badges: string[] = Array.isArray(m?.badges) ? [...m.badges] : []
+          const desc = String(m?.description || '')
+          const tagWords = ['Premium','Organic','Best Seller','Popular','Rare']
+          for (const w of tagWords) if (desc.includes(w) && !badges.includes(w)) badges.push(w)
+          const offMatch = desc.match(/(\d+)%\s*OFF/i)
+          if (offMatch) badges.push(`${offMatch[1]}% OFF`)
+          const priceArrows = desc.match(/₹\s*(\d+[\d\.]*)\s*→\s*₹\s*(\d+[\d\.]*)/)
+          if (priceArrows) {
+            const orig = parseFloat(priceArrows[1])
+            const now = parseFloat(priceArrows[2])
+            if (!Number.isNaN(orig)) derived.original_price = orig
+            if (!Number.isNaN(now)) derived.price = m?.price ?? now
+          }
+          derived.badges = badges.length ? badges : null
+          return derived
         }
         const merged = (base || []).map((p: any) => {
           const m = metaMap.get(p.id)
+          const d = derive(m)
           return {
             id: p.id,
             name: p.name,
             in_stock: p.in_stock,
             stock: inventoryMap.get(p.id) ?? null,
-            price: m?.price ?? null,
+            price: (m?.price ?? d.price) ?? null,
+            original_price: (m?.original_price ?? d.original_price) ?? null,
             image: normalizeImage(m?.image) ?? null,
             category: m?.category ?? null,
             description: m?.description ?? null,
-            badges: m?.badges ?? null,
+            badges: d.badges,
           }
         })
+        try { res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300') } catch {}
         return ok(res, { products: merged })
       }
 
