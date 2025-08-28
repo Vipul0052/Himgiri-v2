@@ -7,6 +7,7 @@ import { OrdersPage } from './pages/OrdersPage'
 import { UsersPage } from './pages/UsersPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { Logo } from '../../components/Logo'
+import { CategoriesPage } from './pages/CategoriesPage'
 
 function useAuth() {
   const [isAdmin, setIsAdmin] = React.useState<boolean>(false)
@@ -58,6 +59,7 @@ export function App() {
     { to: '/orders', label: 'Orders' },
     { to: '/inventory', label: 'Inventory' },
     { to: '/users', label: 'Users' },
+    { to: '/categories', label: 'Categories' },
   ]
 
   const isLogin = location.pathname === '/login'
@@ -100,6 +102,7 @@ export function App() {
           <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
           <Route path="/users" element={<Protected><UsersPage /></Protected>} />
           <Route path="/inventory" element={<Protected><InventoryPage /></Protected>} />
+          <Route path="/categories" element={<Protected><CategoriesPage /></Protected>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

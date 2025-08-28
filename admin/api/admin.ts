@@ -319,6 +319,47 @@ export default async function handler(req: any, res: any) {
         return ok(res, { totalRevenue, totalOrders })
       }
 
+      // Categories
+      case 'categories.list': {
+        await requireAdmin(req, res)
+        const supabase = getSupabase()
+        const { data, error } = await supabase.from('categories').select('*').order('sort', { ascending: true })
+        if (error) return err(res, 'Failed to fetch categories')
+        return ok(res, { categories: data })
+      }
+      case 'categories.create': {
+        const admin = await requireAdmin(req, res); if (!admin) return
+        const { name, description, image, sort = 0 } = req.body || {}
+        if (!name) return bad(res, 'Name required')
+        const supabase = getSupabase()
+        const { data, error } = await supabase.from('categories').insert([{ name, description, image, sort }]).select('*').single()
+        if (error) return err(res, 'Failed to create category')
+        return ok(res, { category: data })
+      }
+      case 'categories.update': {
+        const admin = await requireAdmin(req, res); if (!admin) return
+        const { id, name, description, image, sort } = req.body || {}
+        if (!id) return bad(res, 'Category ID required')
+        const payload: any = {}
+        if (name !== undefined) payload.name = name
+        if (description !== undefined) payload.description = description
+        if (image !== undefined) payload.image = image
+        if (sort !== undefined) payload.sort = sort
+        const supabase = getSupabase()
+        const { data, error } = await supabase.from('categories').update(payload).eq('id', id).select('*').single()
+        if (error) return err(res, 'Failed to update category')
+        return ok(res, { category: data })
+      }
+      case 'categories.delete': {
+        const admin = await requireAdmin(req, res); if (!admin) return
+        const { id } = req.body || {}
+        if (!id) return bad(res, 'Category ID required')
+        const supabase = getSupabase()
+        const { error } = await supabase.from('categories').delete().eq('id', id)
+        if (error) return err(res, 'Failed to delete category')
+        return ok(res, { ok: true })
+      }
+
       default:
         return bad(res, 'Unknown action')
     }

@@ -668,6 +668,17 @@ export default async function handler(req: any, res: any) {
         return ok(res, { products: merged })
       }
 
+      case 'categories.list': {
+        const supabase = getSupabase()
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id, name, description, image, sort')
+          .order('sort', { ascending: true })
+        if (error) return err(res, 'Failed to fetch categories')
+        try { res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600') } catch {}
+        return ok(res, { categories: data || [] })
+      }
+
       case 'ping':
         return ok(res, { ok: true, method: req.method })
 

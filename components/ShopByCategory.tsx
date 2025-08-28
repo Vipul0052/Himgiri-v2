@@ -1,45 +1,35 @@
+import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ArrowRight } from 'lucide-react';
 
-const categories = [
-  {
-    id: 1,
-    name: "Premium Nuts",
-    description: "Almonds, Cashews, Walnuts & More",
-    image: "https://images.unsplash.com/photo-1653046058018-626c37d645db?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhbG1vbmRzJTIwbnV0c3xlbnwxfHx8fDE3NTU0NTExOTF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    color: "from-amber-500/20 to-orange-500/20"
-  },
-  {
-    id: 2,
-    name: "Healthy Seeds",
-    description: "Sunflower, Pumpkin, Chia Seeds",
-    image: "https://images.unsplash.com/photo-1634582872934-be411573f235?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzZWVkcyUyMHN1bmZsb3dlciUyMHB1bXBraW58ZW58MXx8fHwxNzU1NDUxOTAwfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    color: "from-green-500/20 to-emerald-500/20"
-  },
-  {
-    id: 3,
-    name: "Dried Berries",
-    description: "Cranberries, Blueberries, Goji Berries",
-    image: "https://images.unsplash.com/photo-1569654972109-6648a47920ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkcmllZCUyMGJlcnJpZXMlMjBmcnVpdHN8ZW58MXx8fHwxNzU1NDUxODk3fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    color: "from-purple-500/20 to-pink-500/20"
-  },
-  {
-    id: 4,
-    name: "Special Combos",
-    description: "Curated Mix Packs & Gift Sets",
-    image: "https://images.unsplash.com/photo-1733337336596-c8e9c0dfa944?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhc3NvcnRlZCUyMG51dHMlMjBkcmllZCUyMGZydWl0c3xlbnwxfHx8fDE3NTU0NTExOTB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    color: "from-blue-500/20 to-indigo-500/20"
-  }
-];
+interface Category { id: number; name: string; description?: string; image?: string; sort?: number }
 
 interface ShopByCategoryProps {
   onNavigate: (page: string) => void;
 }
 
 export function ShopByCategory({ onNavigate }: ShopByCategoryProps) {
+  const [categories, setCategories] = useState<Category[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const r = await fetch('/api/app?action=categories.list')
+        const j = r.ok ? await r.json() : { categories: [] }
+        if (!cancelled) setCategories(j.categories || [])
+      } catch {
+        if (!cancelled) setCategories([])
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [])
+
   const goShop = () => { try { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }) } catch { window.scrollTo(0, 0) }; onNavigate('shop') }
+
   return (
     <section className="py-16 px-4 bg-muted/30">
       <div className="container mx-auto">
@@ -61,9 +51,8 @@ export function ShopByCategory({ onNavigate }: ShopByCategoryProps) {
             >
               <CardContent className="p-0">
                 <div className="relative h-48 overflow-hidden">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${category.color} z-10`} />
                   <ImageWithFallback
-                    src={category.image}
+                    src={category.image || ''}
                     alt={category.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
