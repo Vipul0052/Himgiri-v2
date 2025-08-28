@@ -302,6 +302,9 @@ export default async function handler(req: any, res: any) {
           .select('*')
           .single()
         if (error) return err(res, 'Failed to update inventory')
+        try {
+          await supabase.from('products').update({ in_stock: Number(stock) > 0 }).eq('id', product_id)
+        } catch {}
         return ok(res, { item: data })
       }
 

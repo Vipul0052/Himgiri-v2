@@ -8,6 +8,8 @@ interface ProductForm {
   in_stock: boolean
   stock: number
   price?: number
+  mrp?: number
+  discountPct?: number
   image?: string
   category?: string
   description?: string
@@ -16,7 +18,7 @@ interface ProductForm {
 export function ProductsPage() {
   const navigate = useNavigate()
   const [products, setProducts] = React.useState<any[]>([])
-  const [form, setForm] = React.useState<ProductForm>({ name: '', in_stock: true, stock: 0, price: undefined, image: '', category: '', description: '' })
+  const [form, setForm] = React.useState<ProductForm>({ name: '', in_stock: true, stock: 0, price: undefined, mrp: undefined, discountPct: undefined, image: '', category: '', description: '' })
   const [loading, setLoading] = React.useState(false)
 
   function goBack() { navigate('/') }
@@ -41,8 +43,13 @@ export function ProductsPage() {
   }, [])
 
   function toMetaPayload() {
+    let price = form.price
+    if (form.mrp && form.discountPct != null) {
+      const p = Math.round(form.mrp * (1 - form.discountPct / 100))
+      price = p
+    }
     return {
-      price: form.price,
+      price,
       image: form.image,
       category: form.category,
       description: form.description,
@@ -77,7 +84,7 @@ export function ProductsPage() {
           body: JSON.stringify({ product_id: productId, stock: form.stock })
         }).catch(() => {})
       }
-      setForm({ name: '', in_stock: true, stock: 0, price: undefined, image: '', category: '', description: '' })
+      setForm({ name: '', in_stock: true, stock: 0, price: undefined, mrp: undefined, discountPct: undefined, image: '', category: '', description: '' })
       load()
     } finally { setLoading(false) }
   }
@@ -90,7 +97,9 @@ export function ProductsPage() {
       name: p.name || '',
       in_stock: !!p.in_stock,
       stock: Number(stockRow?.stock || 0),
-      price: p.meta?.price !== undefined ? Number(p.meta.price) : undefined,
+      price: typeof p.meta?.price === 'number' ? Number(p.meta.price) : undefined,
+      mrp: undefined,
+      discountPct: undefined,
       image: p.meta?.image || '',
       category: p.meta?.category || '',
       description: p.meta?.description || '',
@@ -103,6 +112,15 @@ export function ProductsPage() {
       body: JSON.stringify({ id })
     })
     if (r.ok) load()
+  }
+
+  async function adjustStock(p: any, delta: number) {
+    const newStock = Math.max(0, Number(p.stock || 0) + delta)
+    await fetch('/api/admin?action=inventory.set', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ product_id: p.id, stock: newStock })
+    })
+    load()
   }
 
   return (
@@ -118,16 +136,17 @@ export function ProductsPage() {
         <input placeholder="Name" className="rounded-md border px-3 py-2" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
         <div className="flex items-center gap-2">
           <input id="in_stock" type="checkbox" checked={form.in_stock} onChange={e => setForm({ ...form, in_stock: e.target.checked })} />
-          <label htmlFor="in_stock" className="text-sm">In stock</label>
         </div>
         <input placeholder="Stock quantity" type="number" className="rounded-md border px-3 py-2" value={form.stock} onChange={e => setForm({ ...form, stock: parseInt(e.target.value || '0', 10) })} />
-        <input placeholder="Price" type="number" className="rounded-md border px-3 py-2" value={form.price ?? ''} onChange={e => setForm({ ...form, price: e.target.value === '' ? undefined : parseFloat(e.target.value) })} />
+        <input placeholder="Price (optional)" type="number" className="rounded-md border px-3 py-2" value={form.price ?? ''} onChange={e => setForm({ ...form, price: e.target.value === '' ? undefined : parseFloat(e.target.value) })} />
+        <input placeholder="MRP (for auto price)" type="number" className="rounded-md border px-3 py-2" value={form.mrp ?? ''} onChange={e => setForm({ ...form, mrp: e.target.value === '' ? undefined : parseFloat(e.target.value) })} />
+        <input placeholder="Discount % (for auto price)" type="number" className="rounded-md border px-3 py-2" value={form.discountPct ?? ''} onChange={e => setForm({ ...form, discountPct: e.target.value === '' ? undefined : parseFloat(e.target.value) })} />
         <input placeholder="Image URL" className="rounded-md border px-3 py-2" value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} />
         <input placeholder="Category" className="rounded-md border px-3 py-2" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} />
         <textarea placeholder="Description" className="rounded-md border px-3 py-2 md:col-span-2" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
         <div className="md:col-span-2 flex gap-2">
           <button type="submit" disabled={loading} className="px-4 h-9 rounded-md bg-primary text-primary-foreground">{form.id ? 'Update' : 'Create'} product</button>
-          <button type="button" disabled={loading} onClick={() => setForm({ name: '', in_stock: true, stock: 0, price: undefined, image: '', category: '', description: '' })} className="px-4 h-9 rounded-md border">Clear</button>
+          <button type="button" disabled={loading} onClick={() => setForm({ name: '', in_stock: true, stock: 0, price: undefined, mrp: undefined, discountPct: undefined, image: '', category: '', description: '' })} className="px-4 h-9 rounded-md border">Clear</button>
         </div>
       </form>
 
@@ -135,13 +154,16 @@ export function ProductsPage() {
         {products.map(p => (
           <li key={p.id} className="flex items-center justify-between gap-3 bg-card border rounded-lg p-3">
             <div className="flex items-center gap-3">
-              {p.meta?.image ? <img src={p.meta.image} alt={p.name} className="w-10 h-10 rounded object-cover" /> : <div className="w-10 h-10 rounded bg-muted" />}
+              {p.image ? <img src={p.image} alt={p.name} className="w-10 h-10 rounded object-cover" /> : <div className="w-10 h-10 rounded bg-muted" />}
               <div>
                 <div className="font-medium">{p.name}</div>
-                <div className="text-sm text-muted-foreground">{p.in_stock ? 'In stock' : 'Out of stock'}{p.meta?.price ? ` • ₹${Number(p.meta.price)}` : ''}{p.meta?.category ? ` • ${p.meta.category}` : ''}</div>
+                <div className="text-sm text-muted-foreground">{p.in_stock ? 'In stock' : 'Out of stock'} {typeof p.meta?.price === 'number' ? `• ₹${p.meta.price}` : ''}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <button onClick={() => adjustStock(p, -1)} className="px-3 h-8 rounded-md border">-</button>
+              <span className="text-sm w-10 text-center">{p.stock ?? 0}</span>
+              <button onClick={() => adjustStock(p, +1)} className="px-3 h-8 rounded-md border">+</button>
               <button onClick={() => editProduct(p)} className="px-3 h-8 rounded-md border">Edit</button>
               <button onClick={() => deleteProduct(p.id)} className="px-3 h-8 rounded-md border text-destructive">Delete</button>
             </div>
