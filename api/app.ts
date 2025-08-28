@@ -623,17 +623,28 @@ export default async function handler(req: any, res: any) {
         } catch {}
         const inventoryMap = new Map(inventory.map((r: any) => [r.product_id, r.stock]))
         const metaMap = new Map(meta.map((r: any) => [r.product_id, r]))
-        const merged = (base || []).map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          in_stock: p.in_stock,
-          stock: inventoryMap.get(p.id) ?? null,
-          price: metaMap.get(p.id)?.price ?? null,
-          image: metaMap.get(p.id)?.image ?? null,
-          category: metaMap.get(p.id)?.category ?? null,
-          description: metaMap.get(p.id)?.description ?? null,
-          badges: metaMap.get(p.id)?.badges ?? null,
-        }))
+        const normalizeImage = (url?: string | null) => {
+          if (!url) return null
+          let u = String(url).trim()
+          if (!u) return null
+          if (u.startsWith('//')) u = 'https:' + u
+          if (!/^https?:\/\//i.test(u)) return u // allow relative if you host images
+          return u
+        }
+        const merged = (base || []).map((p: any) => {
+          const m = metaMap.get(p.id)
+          return {
+            id: p.id,
+            name: p.name,
+            in_stock: p.in_stock,
+            stock: inventoryMap.get(p.id) ?? null,
+            price: m?.price ?? null,
+            image: normalizeImage(m?.image) ?? null,
+            category: m?.category ?? null,
+            description: m?.description ?? null,
+            badges: m?.badges ?? null,
+          }
+        })
         return ok(res, { products: merged })
       }
 
