@@ -63,7 +63,16 @@ export function ProductsPage() {
     const stockRow = (inv.inventory || []).find((x: any) => x.product_id === p.id)
     const currentStock = Number(stockRow?.stock || 0)
     
-    console.log('Editing product:', p.id, 'current stock:', currentStock)
+    console.log('Editing product:', p.id, 'current stock:', currentStock, 'meta:', p.meta)
+    
+    // Calculate MRP and discount from existing price if available
+    let mrp = undefined
+    let discountPct = undefined
+    if (p.meta?.price) {
+      // For now, set MRP to price and discount to 0, user can adjust
+      mrp = Number(p.meta.price)
+      discountPct = 0
+    }
     
     setForm({
       id: p.id,
@@ -71,8 +80,8 @@ export function ProductsPage() {
       in_stock: !!p.in_stock,
       stock: currentStock,
       price: typeof p.meta?.price === 'number' ? Number(p.meta.price) : undefined,
-      mrp: undefined,
-      discountPct: undefined,
+      mrp: mrp,
+      discountPct: discountPct,
       image: p.meta?.image || '',
       category: p.meta?.category || '',
       description: p.meta?.description || '',
@@ -82,24 +91,37 @@ export function ProductsPage() {
   async function saveProduct(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    
+    console.log('Saving product with form data:', form)
+    
     try {
       let productId = form.id
       if (form.id) {
+        console.log('Updating existing product:', form.id)
         const r = await fetch('/api/admin?action=products.update', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
           body: JSON.stringify({ id: form.id, name: form.name, in_stock: form.in_stock, meta: toMetaPayload() })
         })
-        if (!r.ok) return
+        if (!r.ok) {
+          console.error('Product update failed:', r.status)
+          return
+        }
         const jr = await r.json().catch(() => ({}))
         productId = jr?.product?.id || form.id
+        console.log('Product updated successfully, ID:', productId)
       } else {
+        console.log('Creating new product')
         const r = await fetch('/api/admin?action=products.create', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
           body: JSON.stringify({ name: form.name, in_stock: form.in_stock, meta: toMetaPayload() })
         })
-        if (!r.ok) return
+        if (!r.ok) {
+          console.error('Product creation failed:', r.status)
+          return
+        }
         const jr = await r.json().catch(() => ({}))
         productId = jr?.product?.id
+        console.log('Product created successfully, ID:', productId)
       }
       
       // Always update inventory after product save
@@ -116,13 +138,20 @@ export function ProductsPage() {
         
         if (inventoryResponse.ok) {
           console.log('Inventory updated successfully')
+          const inventoryData = await inventoryResponse.json()
+          console.log('Inventory response:', inventoryData)
         } else {
-          console.error('Failed to update inventory')
+          console.error('Failed to update inventory:', inventoryResponse.status)
+          const errorText = await inventoryResponse.text()
+          console.error('Inventory error details:', errorText)
         }
+      } else {
+        console.log('Skipping inventory update - productId:', productId, 'stock:', form.stock)
       }
       
       setForm({ name: '', in_stock: true, stock: 0, price: undefined, mrp: undefined, discountPct: undefined, image: '', category: '', description: '' })
       // Reload to get fresh data including updated stock
+      console.log('Reloading products list...')
       await load()
     } finally { setLoading(false) }
   }
