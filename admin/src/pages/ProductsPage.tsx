@@ -27,19 +27,21 @@ export function ProductsPage() {
     const r = await fetch('/api/admin?action=products.list', { credentials: 'include' })
     if (!r.ok) return setProducts([])
     const j = await r.json()
+    console.log('Products data loaded:', j.products)
     setProducts(j.products || [])
   }
 
-  React.useEffect(() => { load() }, [])
   React.useEffect(() => {
+    load()
+    // Realtime subscriptions for all relevant tables
     if (!supabase) return
-    const channel = supabase
-      .channel('admin-products')
+    const channel = supabase.channel('products_page_changes')
+    channel
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'product_meta' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, () => load())
       .subscribe()
-    return () => { supabase?.removeChannel(channel) }
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   function toMetaPayload() {
@@ -115,12 +117,40 @@ export function ProductsPage() {
   }
 
   async function adjustStock(p: any, delta: number) {
-    const newStock = Math.max(0, Number(p.stock || 0) + delta)
-    await fetch('/api/admin?action=inventory.set', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({ product_id: p.id, stock: newStock })
-    })
-    load()
+    const currentStock = Number(p.stock || 0)
+    const newStock = Math.max(0, currentStock + delta)
+    
+    console.log('Adjusting stock for product:', p.id, 'from', currentStock, 'to', newStock)
+    
+    try {
+      const response = await fetch('/api/admin?action=inventory.set', {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        credentials: 'include',
+        body: JSON.stringify({ 
+          product_id: p.id, 
+          stock: newStock,
+          low_stock_threshold: 10 // Set a default threshold
+        })
+      })
+      
+      if (response.ok) {
+        console.log('Stock updated successfully, updating local state')
+        // Update local state immediately for better UX
+        setProducts(prev => prev.map(product => 
+          product.id === p.id 
+            ? { ...product, stock: newStock, in_stock: newStock > 0 }
+            : product
+        ))
+        // Also reload to ensure consistency
+        setTimeout(() => load(), 500)
+      } else {
+        const errorText = await response.text()
+        console.error('Failed to update stock:', response.status, errorText)
+      }
+    } catch (error) {
+      console.error('Error updating stock:', error)
+    }
   }
 
   return (
@@ -153,19 +183,36 @@ export function ProductsPage() {
       <ul className="space-y-2">
         {products.map(p => (
           <li key={p.id} className="flex items-center justify-between gap-3 bg-card border rounded-lg p-3">
-            <div className="flex items-center gap-3">
-              {p.image ? <img src={p.image} alt={p.name} className="w-10 h-10 rounded object-cover" /> : <div className="w-10 h-10 rounded bg-muted" />}
-              <div>
+            <div className="flex items-center gap-3 flex-1">
+              {p.meta?.image ? <img src={p.meta.image} alt={p.name} className="w-16 h-16 rounded object-cover" /> : <div className="w-16 h-16 rounded bg-muted" />}
+              <div className="flex-1">
                 <div className="font-medium">{p.name}</div>
-                <div className="text-sm text-muted-foreground">{p.in_stock ? 'In stock' : 'Out of stock'} {typeof p.meta?.price === 'number' ? `• ₹${p.meta.price}` : ''}</div>
+                <div className="text-sm text-muted-foreground">
+                  {p.in_stock ? 'In stock' : 'Out of stock'} 
+                  {typeof p.meta?.price === 'number' ? ` • ₹${p.meta.price}` : ''}
+                  {p.meta?.category ? ` • ${p.meta.category}` : ''}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => adjustStock(p, -1)} className="px-3 h-8 rounded-md border">-</button>
-              <span className="text-sm w-10 text-center">{p.stock ?? 0}</span>
-              <button onClick={() => adjustStock(p, +1)} className="px-3 h-8 rounded-md border">+</button>
-              <button onClick={() => editProduct(p)} className="px-3 h-8 rounded-md border">Edit</button>
-              <button onClick={() => deleteProduct(p.id)} className="px-3 h-8 rounded-md border text-destructive">Delete</button>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => adjustStock(p, -1)} 
+                  className="w-8 h-8 rounded-md border flex items-center justify-center hover:bg-accent/10"
+                  disabled={!p.in_stock}
+                >
+                  -
+                </button>
+                <span className="text-sm w-12 text-center font-medium">{p.stock ?? 0}</span>
+                <button 
+                  onClick={() => adjustStock(p, +1)} 
+                  className="w-8 h-8 rounded-md border flex items-center justify-center hover:bg-accent/10"
+                >
+                  +
+                </button>
+              </div>
+              <button onClick={() => editProduct(p)} className="px-3 h-8 rounded-md border hover:bg-accent/10">Edit</button>
+              <button onClick={() => deleteProduct(p.id)} className="px-3 h-8 rounded-md border text-destructive hover:bg-destructive/10">Delete</button>
             </div>
           </li>
         ))}
