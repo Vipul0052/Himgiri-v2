@@ -6,12 +6,16 @@ interface ProductForm {
   name: string
   in_stock: boolean
   stock: number
+  price?: number
+  image?: string
+  category?: string
+  description?: string
 }
 
 export function ProductsPage() {
   const navigate = useNavigate()
   const [products, setProducts] = React.useState<any[]>([])
-  const [form, setForm] = React.useState<ProductForm>({ name: '', in_stock: true, stock: 0 })
+  const [form, setForm] = React.useState<ProductForm>({ name: '', in_stock: true, stock: 0, price: undefined, image: '', category: '', description: '' })
   const [loading, setLoading] = React.useState(false)
 
   function goBack() { navigate('/') }
@@ -29,6 +33,15 @@ export function ProductsPage() {
     return () => clearInterval(t)
   }, [])
 
+  function toMetaPayload() {
+    return {
+      price: form.price,
+      image: form.image,
+      category: form.category,
+      description: form.description,
+    }
+  }
+
   async function saveProduct(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -37,7 +50,7 @@ export function ProductsPage() {
       if (form.id) {
         const r = await fetch('/api/admin?action=products.update', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-          body: JSON.stringify({ id: form.id, name: form.name, in_stock: form.in_stock })
+          body: JSON.stringify({ id: form.id, name: form.name, in_stock: form.in_stock, meta: toMetaPayload() })
         })
         if (!r.ok) return
         const jr = await r.json().catch(() => ({}))
@@ -45,7 +58,7 @@ export function ProductsPage() {
       } else {
         const r = await fetch('/api/admin?action=products.create', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-          body: JSON.stringify({ name: form.name, in_stock: form.in_stock })
+          body: JSON.stringify({ name: form.name, in_stock: form.in_stock, meta: toMetaPayload() })
         })
         if (!r.ok) return
         const jr = await r.json().catch(() => ({}))
@@ -57,7 +70,7 @@ export function ProductsPage() {
           body: JSON.stringify({ product_id: productId, stock: form.stock })
         }).catch(() => {})
       }
-      setForm({ name: '', in_stock: true, stock: 0 })
+      setForm({ name: '', in_stock: true, stock: 0, price: undefined, image: '', category: '', description: '' })
       load()
     } finally { setLoading(false) }
   }
@@ -65,7 +78,16 @@ export function ProductsPage() {
   async function editProduct(p: any) {
     const inv = await fetch('/api/admin?action=inventory.list', { credentials: 'include' }).then(r => r.ok ? r.json() : { inventory: [] })
     const stockRow = (inv.inventory || []).find((x: any) => x.product_id === p.id)
-    setForm({ id: p.id, name: p.name || '', in_stock: !!p.in_stock, stock: Number(stockRow?.stock || 0) })
+    setForm({
+      id: p.id,
+      name: p.name || '',
+      in_stock: !!p.in_stock,
+      stock: Number(stockRow?.stock || 0),
+      price: p.meta?.price !== undefined ? Number(p.meta.price) : undefined,
+      image: p.meta?.image || '',
+      category: p.meta?.category || '',
+      description: p.meta?.description || '',
+    })
   }
 
   async function deleteProduct(id: number) {
@@ -92,18 +114,25 @@ export function ProductsPage() {
           <label htmlFor="in_stock" className="text-sm">In stock</label>
         </div>
         <input placeholder="Stock quantity" type="number" className="rounded-md border px-3 py-2" value={form.stock} onChange={e => setForm({ ...form, stock: parseInt(e.target.value || '0', 10) })} />
+        <input placeholder="Price" type="number" className="rounded-md border px-3 py-2" value={form.price ?? ''} onChange={e => setForm({ ...form, price: e.target.value === '' ? undefined : parseFloat(e.target.value) })} />
+        <input placeholder="Image URL" className="rounded-md border px-3 py-2" value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} />
+        <input placeholder="Category" className="rounded-md border px-3 py-2" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} />
+        <textarea placeholder="Description" className="rounded-md border px-3 py-2 md:col-span-2" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
         <div className="md:col-span-2 flex gap-2">
           <button type="submit" disabled={loading} className="px-4 h-9 rounded-md bg-primary text-primary-foreground">{form.id ? 'Update' : 'Create'} product</button>
-          <button type="button" disabled={loading} onClick={() => setForm({ name: '', in_stock: true, stock: 0 })} className="px-4 h-9 rounded-md border">Clear</button>
+          <button type="button" disabled={loading} onClick={() => setForm({ name: '', in_stock: true, stock: 0, price: undefined, image: '', category: '', description: '' })} className="px-4 h-9 rounded-md border">Clear</button>
         </div>
       </form>
 
       <ul className="space-y-2">
         {products.map(p => (
           <li key={p.id} className="flex items-center justify-between gap-3 bg-card border rounded-lg p-3">
-            <div>
-              <div className="font-medium">{p.name}</div>
-              <div className="text-sm text-muted-foreground">{p.in_stock ? 'In stock' : 'Out of stock'}</div>
+            <div className="flex items-center gap-3">
+              {p.meta?.image ? <img src={p.meta.image} alt={p.name} className="w-10 h-10 rounded object-cover" /> : <div className="w-10 h-10 rounded bg-muted" />}
+              <div>
+                <div className="font-medium">{p.name}</div>
+                <div className="text-sm text-muted-foreground">{p.in_stock ? 'In stock' : 'Out of stock'}{p.meta?.price ? ` • ₹${Number(p.meta.price)}` : ''}{p.meta?.category ? ` • ${p.meta.category}` : ''}</div>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => editProduct(p)} className="px-3 h-8 rounded-md border">Edit</button>
