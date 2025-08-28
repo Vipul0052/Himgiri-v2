@@ -58,6 +58,27 @@ export function ProductsPage() {
     }
   }
 
+  async function editProduct(p: any) {
+    const inv = await fetch('/api/admin?action=inventory.list', { credentials: 'include' }).then(r => r.ok ? r.json() : { inventory: [] })
+    const stockRow = (inv.inventory || []).find((x: any) => x.product_id === p.id)
+    const currentStock = Number(stockRow?.stock || 0)
+    
+    console.log('Editing product:', p.id, 'current stock:', currentStock)
+    
+    setForm({
+      id: p.id,
+      name: p.name || '',
+      in_stock: !!p.in_stock,
+      stock: currentStock,
+      price: typeof p.meta?.price === 'number' ? Number(p.meta.price) : undefined,
+      mrp: undefined,
+      discountPct: undefined,
+      image: p.meta?.image || '',
+      category: p.meta?.category || '',
+      description: p.meta?.description || '',
+    })
+  }
+
   async function saveProduct(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -80,33 +101,30 @@ export function ProductsPage() {
         const jr = await r.json().catch(() => ({}))
         productId = jr?.product?.id
       }
+      
+      // Always update inventory after product save
       if (productId && form.stock >= 0) {
-        await fetch('/api/admin?action=inventory.set', {
+        console.log('Setting inventory for product:', productId, 'stock:', form.stock)
+        const inventoryResponse = await fetch('/api/admin?action=inventory.set', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-          body: JSON.stringify({ product_id: productId, stock: form.stock })
-        }).catch(() => {})
+          body: JSON.stringify({ 
+            product_id: productId, 
+            stock: form.stock,
+            low_stock_threshold: 10
+          })
+        })
+        
+        if (inventoryResponse.ok) {
+          console.log('Inventory updated successfully')
+        } else {
+          console.error('Failed to update inventory')
+        }
       }
+      
       setForm({ name: '', in_stock: true, stock: 0, price: undefined, mrp: undefined, discountPct: undefined, image: '', category: '', description: '' })
       // Reload to get fresh data including updated stock
       await load()
     } finally { setLoading(false) }
-  }
-
-  async function editProduct(p: any) {
-    const inv = await fetch('/api/admin?action=inventory.list', { credentials: 'include' }).then(r => r.ok ? r.json() : { inventory: [] })
-    const stockRow = (inv.inventory || []).find((x: any) => x.product_id === p.id)
-    setForm({
-      id: p.id,
-      name: p.name || '',
-      in_stock: !!p.in_stock,
-      stock: Number(stockRow?.stock || 0),
-      price: typeof p.meta?.price === 'number' ? Number(p.meta.price) : undefined,
-      mrp: undefined,
-      discountPct: undefined,
-      image: p.meta?.image || '',
-      category: p.meta?.category || '',
-      description: p.meta?.description || '',
-    })
   }
 
   async function deleteProduct(id: number) {

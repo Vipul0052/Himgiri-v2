@@ -217,6 +217,43 @@ export default async function handler(req: any, res: any) {
         
         console.log('Order created successfully:', data)
         
+        // Reduce stock for all ordered items
+        try {
+          console.log('Reducing stock for order items:', items)
+          for (const item of items) {
+            const productId = parseInt(item.id)
+            if (!productId || !item.quantity) continue
+            
+            // Get current stock
+            const { data: currentStock } = await supabase
+              .from('inventory')
+              .select('stock')
+              .eq('product_id', productId)
+              .single()
+            
+            if (currentStock && typeof currentStock.stock === 'number') {
+              const newStock = Math.max(0, currentStock.stock - item.quantity)
+              console.log(`Reducing stock for product ${productId}: ${currentStock.stock} → ${newStock}`)
+              
+              // Update inventory
+              await supabase
+                .from('inventory')
+                .update({ stock: newStock })
+                .eq('product_id', productId)
+              
+              // Update product in_stock status
+              await supabase
+                .from('products')
+                .update({ in_stock: newStock > 0 })
+                .eq('id', productId)
+            }
+          }
+          console.log('Stock reduction completed successfully')
+        } catch (stockError) {
+          console.error('Failed to reduce stock:', stockError)
+          // Don't fail the order if stock reduction fails
+        }
+        
         // Send order confirmation email
         try {
           const { transporter, smtpFrom } = getMailer()

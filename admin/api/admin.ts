@@ -227,6 +227,49 @@ export default async function handler(req: any, res: any) {
         if (shipping_updates) updateData.shipping_updates = shipping_updates
         const { error } = await supabase.from('orders').update(updateData).eq('id', id)
         if (error) return err(res, 'Failed to update order')
+        
+        // Handle stock restoration for cancelled orders
+        if (status === 'cancelled') {
+          try {
+            console.log('Order cancelled, restoring stock...')
+            const { data: order } = await supabase.from('orders').select('items').eq('id', id).single()
+            
+            if (order?.items && Array.isArray(order.items)) {
+              for (const item of order.items) {
+                const productId = parseInt(item.id)
+                if (!productId || !item.quantity) continue
+                
+                // Get current stock
+                const { data: currentStock } = await supabase
+                  .from('inventory')
+                  .select('stock')
+                  .eq('product_id', productId)
+                  .single()
+                
+                if (currentStock && typeof currentStock.stock === 'number') {
+                  const newStock = currentStock.stock + item.quantity
+                  console.log(`Restoring stock for product ${productId}: ${currentStock.stock} → ${newStock}`)
+                  
+                  // Update inventory
+                  await supabase
+                    .from('inventory')
+                    .update({ stock: newStock })
+                    .eq('product_id', productId)
+                  
+                  // Update product in_stock status
+                  await supabase
+                    .from('products')
+                    .update({ in_stock: newStock > 0 })
+                    .eq('id', productId)
+                }
+              }
+              console.log('Stock restoration completed for cancelled order')
+            }
+          } catch (stockError) {
+            console.error('Failed to restore stock for cancelled order:', stockError)
+          }
+        }
+        
         // Send email notification to the customer
         try {
           const { data: order } = await supabase.from('orders').select('email, name, status, tracking_number').eq('id', id).single()
@@ -295,16 +338,42 @@ export default async function handler(req: any, res: any) {
         const admin = await requireAdmin(req, res); if (!admin) return
         const { product_id, stock, low_stock_threshold, sku } = req.body || {}
         if (!product_id || stock === undefined) return bad(res, 'product_id and stock required')
+        
+        console.log('Setting inventory for product:', product_id, 'stock:', stock)
+        
         const supabase = getSupabase()
+        
+        // First update inventory
         const { data, error } = await supabase
           .from('inventory')
           .upsert([{ product_id, stock, low_stock_threshold, sku }], { onConflict: 'product_id' })
           .select('*')
           .single()
-        if (error) return err(res, 'Failed to update inventory')
+          
+        if (error) {
+          console.error('Inventory update failed:', error)
+          return err(res, 'Failed to update inventory')
+        }
+        
+        // Then update products.in_stock based on stock value
         try {
-          await supabase.from('products').update({ in_stock: Number(stock) > 0 }).eq('id', product_id)
-        } catch {}
+          const newInStock = Number(stock) > 0
+          console.log('Updating product in_stock to:', newInStock)
+          
+          const { error: productError } = await supabase
+            .from('products')
+            .update({ in_stock: newInStock })
+            .eq('id', product_id)
+            
+          if (productError) {
+            console.error('Product update failed:', productError)
+          } else {
+            console.log('Product in_stock updated successfully')
+          }
+        } catch (e) {
+          console.error('Error updating product in_stock:', e)
+        }
+        
         return ok(res, { item: data })
       }
 
