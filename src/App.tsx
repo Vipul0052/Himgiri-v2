@@ -47,6 +47,8 @@ export default function App() {
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
+    // Scroll to top when navigating to a new page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const renderPage = () => {

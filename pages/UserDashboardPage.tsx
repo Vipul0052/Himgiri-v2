@@ -99,7 +99,11 @@ interface Review {
   product_image: string;
 }
 
-export function UserDashboardPage() {
+interface UserDashboardPageProps {
+  onNavigate: (page: string) => void;
+}
+
+export function UserDashboardPage({ onNavigate }: UserDashboardPageProps) {
   const { user, orders, logout } = useAuth();
   const { showToast } = useToast();
   
@@ -312,8 +316,8 @@ export function UserDashboardPage() {
             <CardDescription>Please login to access your dashboard</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full" onClick={() => window.location.href = '/#login'}>
-              Go to Login
+            <Button className="w-full" onClick={() => onNavigate('login')}>
+              Login to Continue
             </Button>
           </CardContent>
         </Card>
@@ -815,7 +819,7 @@ export function UserDashboardPage() {
                     <p className="text-sm text-muted-foreground mt-1">
                       Start shopping to see your order history here
                     </p>
-                    <Button className="mt-4" onClick={() => window.location.href = '/#shop'}>
+                    <Button className="mt-4" onClick={() => onNavigate('shop')}>
                       Browse Products
                     </Button>
                   </div>
@@ -878,7 +882,7 @@ export function UserDashboardPage() {
                     <p className="text-sm text-muted-foreground mt-1">
                       Start adding products you love to your wishlist
                     </p>
-                    <Button className="mt-4" onClick={() => window.location.href = '/#shop'}>
+                    <Button className="mt-4" onClick={() => onNavigate('shop')}>
                       Browse Products
                     </Button>
                   </div>
