@@ -6,6 +6,13 @@ import { ArrowRight } from 'lucide-react';
 
 interface Category { id: number; name: string; description?: string; image?: string; sort?: number }
 
+const defaultCategories: Category[] = [
+  { id: 1, name: 'Premium Nuts', description: 'Almonds, Cashews, Walnuts & More', image: 'https://images.unsplash.com/photo-1653046058018-626c37d645db?w=1080', sort: 10 },
+  { id: 2, name: 'Healthy Seeds', description: 'Sunflower, Pumpkin, Chia Seeds', image: 'https://images.unsplash.com/photo-1634582872934-be411573f235?w=1080', sort: 20 },
+  { id: 3, name: 'Dried Berries', description: 'Cranberries, Blueberries, Goji Berries', image: 'https://images.unsplash.com/photo-1569654972109-6648a47920ce?w=1080', sort: 30 },
+  { id: 4, name: 'Special Combos', description: 'Curated Mix Packs & Gift Sets', image: 'https://images.unsplash.com/photo-1733337336596-c8e9c0dfa944?w=1080', sort: 40 },
+]
+
 interface ShopByCategoryProps {
   onNavigate: (page: string) => void;
 }
@@ -30,6 +37,8 @@ export function ShopByCategory({ onNavigate }: ShopByCategoryProps) {
 
   const goShop = () => { try { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }) } catch { window.scrollTo(0, 0) }; onNavigate('shop') }
 
+  const categoriesToRender = categories.length ? categories : defaultCategories
+
   return (
     <section className="py-16 px-4 bg-muted/30">
       <div className="container mx-auto">
@@ -43,7 +52,7 @@ export function ShopByCategory({ onNavigate }: ShopByCategoryProps) {
 
         {/* Categories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categories.map((category) => (
+          {categoriesToRender.map((category) => (
             <Card 
               key={category.id} 
               className="group cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden border-0"
