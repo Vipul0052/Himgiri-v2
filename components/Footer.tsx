@@ -96,7 +96,7 @@ export function Footer({ onNavigate }: FooterProps) {
               </li>
               <li>
                 <button 
-                  onClick={() => handleQuickLinkClick('home')} 
+                  onClick={() => handleQuickLinkClick('health-benefits')} 
                   className="text-background/80 hover:text-background transition-colors text-left"
                 >
                   Health Benefits
