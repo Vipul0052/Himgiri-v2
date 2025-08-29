@@ -57,11 +57,11 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
 
           {/* Hero Image */}
           <div className="relative">
-            <div className="w-full h-[320px] md:h-[420px] lg:h-[520px] rounded-2xl overflow-hidden shadow-2xl bg-white">
+            <div className="w-full h-[420px] md:h-[560px] lg:h-[680px] rounded-2xl overflow-hidden shadow-2xl">
               <ImageWithFallback
                 src="https://drive.google.com/thumbnail?id=1_kvrE6YIyF3zOSo6rRnjtZUpimMtiQXS&sz=w2000"
                 alt="Assorted premium Himalayan nuts and dried fruits"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
             </div>
