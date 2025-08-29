@@ -59,9 +59,10 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
           <div className="relative">
             <div className="aspect-square rounded-2xl overflow-hidden shadow-2xl">
               <ImageWithFallback
-                src="https://drive.google.com/uc?export=view&id=1wllzUm94gpsAmND71LdvTfk7qoqsvfVD"
+                src="https://drive.google.com/thumbnail?id=1wllzUm94gpsAmND71LdvTfk7qoqsvfVD&sz=w1080"
                 alt="Assorted premium Himalayan nuts and dried fruits"
                 className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
               />
             </div>
             {/* Floating badges */}
