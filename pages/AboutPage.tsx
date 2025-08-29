@@ -44,11 +44,12 @@ export function AboutPage() {
               </div>
             </div>
             <div className="relative">
-              <div className="aspect-square rounded-2xl overflow-hidden shadow-xl">
+              <div className="w-full h-[420px] md:h-[560px] lg:h-[680px] rounded-2xl overflow-hidden shadow-xl">
                 <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1733337336596-c8e9c0dfa944?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhc3NvcnRlZCUyMG51dHMlMjBkcmllZCUyMGZydWl0c3xlbnwxfHx8fDE3NTU0NTExOTB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                  src="https://drive.google.com/thumbnail?id=1_kvrE6YIyF3zOSo6rRnjtZUpimMtiQXS&sz=w2000"
                   alt="Himgirinaturals premium dry fruits collection"
                   className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
                 />
               </div>
               <Badge className="absolute -bottom-4 -right-4 bg-accent text-accent-foreground px-6 py-2 text-sm">

@@ -14,6 +14,7 @@ import { FAQPage } from '../pages/FAQPage';
 import { ShippingInfoPage } from '../pages/ShippingInfoPage';
 import { ReturnsRefundsPage } from '../pages/ReturnsRefundsPage';
 import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
+import { HealthBenefitsPage } from '../pages/HealthBenefitsPage';
 import { TermsOfServicePage } from '../pages/TermsOfServicePage';
 import { UserDashboardPage } from '../pages/UserDashboardPage';
 import { WishlistPage } from '../pages/WishlistPage';
@@ -77,6 +78,8 @@ export default function App() {
         return <ReturnsRefundsPage />;
       case 'privacy-policy':
         return <PrivacyPolicyPage />;
+      case 'health-benefits':
+        return <HealthBenefitsPage />;
       case 'terms-of-service':
         return <TermsOfServicePage />;
       case 'dashboard':

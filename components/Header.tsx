@@ -31,6 +31,7 @@ export function Header({ currentPage, onNavigate }: HeaderProps) {
   const navItems = [
     { id: 'home', label: 'Home' },
     { id: 'shop', label: 'Shop' },
+    { id: 'health-benefits', label: 'Health Benefits' },
     { id: 'about', label: 'About Us' },
   ];
 
