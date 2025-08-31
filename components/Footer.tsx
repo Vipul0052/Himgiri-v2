@@ -131,10 +131,10 @@ export function Footer({ onNavigate }: FooterProps) {
             <ul className="space-y-2 text-sm">
               <li>
                 <button 
-                  onClick={() => handleQuickLinkClick('contact')} 
+                  onClick={() => handleQuickLinkClick('about')} 
                   className="text-background/80 hover:text-background transition-colors text-left"
                 >
-                  Contact Us
+                  Contact Us (TEST - goes to About)
                 </button>
               </li>
               <li>
