@@ -1,11 +1,30 @@
 import { Button } from './ui/button';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useState, useEffect } from 'react';
 
 interface HeroSectionProps {
   onNavigate: (page: string) => void;
 }
 
 export function HeroSection({ onNavigate }: HeroSectionProps) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [showHighRes, setShowHighRes] = useState(false);
+
+  // Preload the hero image
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setImageLoaded(true);
+    img.onerror = () => setImageError(true);
+    // Start with smaller thumbnail for faster loading
+    img.src = "https://drive.google.com/thumbnail?id=1_kvrE6YIyF3zOSo6rRnjtZUpimMtiQXS&sz=w800";
+    
+    // Load high-res version after initial load
+    const highResImg = new Image();
+    highResImg.onload = () => setShowHighRes(true);
+    highResImg.src = "https://drive.google.com/thumbnail?id=1_kvrE6YIyF3zOSo6rRnjtZUpimMtiQXS&sz=w2000";
+  }, []);
+
   return (
     <section className="relative py-20 px-4 bg-gradient-to-br from-background to-muted overflow-hidden">
       <div className="container mx-auto">
@@ -57,12 +76,53 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
 
           {/* Hero Image */}
           <div className="relative">
-            <div className="aspect-square rounded-2xl overflow-hidden shadow-2xl">
-              <ImageWithFallback
-                src="https://images.unsplash.com/photo-1733337336596-c8e9c0dfa944?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhc3NvcnRlZCUyMG51dHMlMjBkcmllZCUyMGZydWl0c3xlbnwxfHx8fDE3NTU0NTExOTB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                alt="Assorted premium Himalayan nuts and dried fruits"
-                className="w-full h-full object-cover"
-              />
+            {/* Image container with loading priority */}
+            <div className="w-full h-[420px] md:h-[560px] lg:h-[680px] rounded-2xl overflow-hidden shadow-2xl relative">
+              {/* Loading Skeleton */}
+              {!imageLoaded && !imageError && (
+                <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 animate-pulse flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-accent/20 rounded-full mx-auto mb-4 animate-bounce"></div>
+                    <p className="text-muted-foreground">Loading...</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Fallback */}
+              {imageError && (
+                <div className="w-full h-full bg-muted flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <div className="w-16 h-16 bg-muted-foreground/20 rounded-full mx-auto mb-4"></div>
+                    <p>Image loading failed</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Actual Image */}
+              {imageLoaded && (
+                <>
+                  {/* Low-res image (always visible once loaded) */}
+                  <img
+                    src="https://drive.google.com/thumbnail?id=1_kvrE6YIyF3zOSo6rRnjtZUpimMtiQXS&sz=w800"
+                    alt="Assorted premium Himalayan nuts and dried fruits"
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    loading="eager"
+                    fetchPriority="high"
+                  />
+                  
+                  {/* High-res image (overlays when ready) */}
+                  {showHighRes && (
+                    <img
+                      src="https://drive.google.com/thumbnail?id=1_kvrE6YIyF3zOSo6rRnjtZUpimMtiQXS&sz=w2000"
+                      alt="Assorted premium Himalayan nuts and dried fruits"
+                      className="w-full h-full object-cover absolute inset-0 transition-opacity duration-500"
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                    />
+                  )}
+                </>
+              )}
             </div>
             {/* Floating badges */}
             <div className="absolute -top-4 -right-4 bg-accent text-accent-foreground px-4 py-2 rounded-full text-sm font-medium shadow-lg">

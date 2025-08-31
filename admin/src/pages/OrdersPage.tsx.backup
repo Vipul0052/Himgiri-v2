@@ -1,0 +1,252 @@
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
+
+export function OrdersPage() {
+  const navigate = useNavigate()
+  const [orders, setOrders] = React.useState<any[]>([])
+  const [testResult, setTestResult] = React.useState<string>('')
+  const [selectedOrder, setSelectedOrder] = React.useState<any>(null)
+  const [showOrderDetails, setShowOrderDetails] = React.useState(false)
+
+  function goBack() { navigate('/') }
+
+  async function load() {
+    const r = await fetch('/api/admin?action=orders.list', { credentials: 'include' })
+    if (!r.ok) return setOrders([])
+    const j = await r.json()
+    setOrders(j.orders || [])
+  }
+
+  React.useEffect(() => { load() }, [])
+
+  async function testEmail() {
+    try {
+      const r = await fetch('/api/admin?action=test-email', { credentials: 'include' })
+      const j = await r.json()
+      if (r.ok) {
+        setTestResult(`✅ ${j.message}`)
+      } else {
+        setTestResult(`❌ ${j.message}`)
+      }
+    } catch (e) {
+      setTestResult(`❌ Test failed: ${e.message}`)
+    }
+  }
+
+  async function updateStatus(id: number, status: string) {
+    const r = await fetch('/api/admin?action=orders.update-status', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ id, status })
+    })
+    if (r.ok) load()
+  }
+
+  async function generateInvoice(orderId: number) {
+    try {
+      const r = await fetch('/api/admin?action=orders.generate-invoice', {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        credentials: 'include',
+        body: JSON.stringify({ order_id: orderId })
+      })
+      if (r.ok) {
+        const blob = await r.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `invoice-${orderId}.pdf`
+        a.click()
+        window.URL.revokeObjectURL(url)
+      }
+    } catch (e) {
+      console.error('Failed to generate invoice:', e)
+    }
+  }
+
+  function formatDate(dateString: string) {
+    return new Date(dateString).toLocaleString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  function calculateGST(amount: number) {
+    return (amount * 0.18).toFixed(2) // 18% GST
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <button onClick={goBack} className="px-3 h-9 inline-flex items-center rounded-md border hover:bg-accent/10">Back</button>
+        <h2 className="text-xl font-semibold">Orders</h2>
+        <button onClick={testEmail} className="px-3 h-9 inline-flex items-center rounded-md border bg-blue-100">Test Email</button>
+        {testResult && <span className="text-sm">{testResult}</span>}
+      </div>
+
+      <ul className="space-y-3">
+        {orders.map(o => (
+          <li key={o.id} className="bg-white border rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="font-semibold text-lg">Order #{o.id}</div>
+                  <div className="text-lg font-bold text-green-600">₹{o.amount}</div>
+                  <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                    {formatDate(o.created_at)}
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div><strong>Customer:</strong> {o.name || '—'} ({o.email})</div>
+                  <div><strong>Payment:</strong> {o.payment_method || 'Online'} • {o.provider || '—'}</div>
+                  {o.tracking_number && <div><strong>Tracking:</strong> {o.tracking_number}</div>}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <select value={o.status} onChange={e => updateStatus(o.id, e.target.value)} className="rounded-md border px-3 h-9">
+                  <option value="pending">Pending</option>
+                  <option value="processing">Processing</option>
+                  <option value="shipped">Shipped</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <button 
+                  onClick={() => setSelectedOrder(o); setShowOrderDetails(true)}
+                  className="px-3 h-9 rounded-md border hover:bg-gray-50"
+                >
+                  View Details
+                </button>
+                <button 
+                  onClick={() => generateInvoice(o.id)}
+                  className="px-3 h-9 rounded-md border bg-green-100 hover:bg-green-200"
+                >
+                  📄 Invoice
+                </button>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {/* Order Details Modal */}
+      {showOrderDetails && selectedOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold">Order #{selectedOrder.id} Details</h3>
+              <button onClick={() => setShowOrderDetails(false)} className="text-gray-500 hover:text-gray-700">
+                ✕
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Customer & Order Info */}
+              <div className="space-y-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-semibold mb-2">Customer Information</h4>
+                  <div className="space-y-1 text-sm">
+                    <div><strong>Name:</strong> {selectedOrder.name || '—'}</div>
+                    <div><strong>Email:</strong> {selectedOrder.email}</div>
+                    <div><strong>Phone:</strong> {selectedOrder.shipping?.phone || '—'}</div>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-semibold mb-2">Order Information</h4>
+                  <div className="space-y-1 text-sm">
+                    <div><strong>Order Date:</strong> {formatDate(selectedOrder.created_at)}</div>
+                    <div><strong>Status:</strong> <span className="capitalize">{selectedOrder.status}</span></div>
+                    <div><strong>Payment Method:</strong> {selectedOrder.payment_method || 'Online'}</div>
+                    <div><strong>Provider:</strong> {selectedOrder.provider || '—'}</div>
+                    {selectedOrder.tracking_number && (
+                      <div><strong>Tracking:</strong> {selectedOrder.tracking_number}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Shipping Address */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold mb-2">Shipping Address</h4>
+                {selectedOrder.shipping ? (
+                  <div className="space-y-1 text-sm">
+                    <div>{selectedOrder.shipping.fullName || selectedOrder.shipping.full_name}</div>
+                    <div>{selectedOrder.shipping.address}</div>
+                    <div>{selectedOrder.shipping.city}, {selectedOrder.shipping.state}</div>
+                    <div>{selectedOrder.shipping.pincode}</div>
+                    <div>{selectedOrder.shipping.phone}</div>
+                  </div>
+                ) : (
+                  <div className="text-gray-500">No shipping address provided</div>
+                )}
+              </div>
+            </div>
+
+            {/* Order Items */}
+            <div className="mt-6">
+              <h4 className="font-semibold mb-3">Order Items</h4>
+              <div className="bg-gray-50 rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-4 py-2 text-left">Product</th>
+                      <th className="px-4 py-2 text-right">Price</th>
+                      <th className="px-4 py-2 text-center">Qty</th>
+                      <th className="px-4 py-2 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedOrder.items?.map((item: any, index: number) => (
+                      <tr key={index} className="border-t">
+                        <td className="px-4 py-2">
+                          <div>
+                            <div className="font-medium">{item.name}</div>
+                            <div className="text-sm text-gray-500">ID: {item.id}</div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2 text-right">₹{item.price}</td>
+                        <td className="px-4 py-2 text-center">{item.quantity}</td>
+                        <td className="px-4 py-2 text-right font-medium">₹{item.price * item.quantity}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-gray-100">
+                    <tr>
+                      <td colSpan={3} className="px-4 py-2 text-right font-medium">Subtotal:</td>
+                      <td className="px-4 py-2 text-right font-medium">₹{selectedOrder.amount}</td>
+                    </tr>
+                    <tr>
+                      <td colSpan={3} className="px-4 py-2 text-right">GST (18%):</td>
+                      <td className="px-4 py-2 text-right">₹{calculateGST(selectedOrder.amount)}</td>
+                    </tr>
+                    <tr className="border-t-2">
+                      <td colSpan={3} className="px-4 py-2 text-right font-bold text-lg">Total:</td>
+                      <td className="px-4 py-2 text-right font-bold text-lg">₹{selectedOrder.amount}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button 
+                onClick={() => generateInvoice(selectedOrder.id)}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                📄 Generate & Download Invoice
+              </button>
+              <button 
+                onClick={() => setShowOrderDetails(false)}
+                className="px-4 py-2 border rounded hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

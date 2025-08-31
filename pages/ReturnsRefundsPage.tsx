@@ -121,7 +121,7 @@ export function ReturnsRefundsPage({ onNavigate }: ReturnsRefundsPageProps) {
                   <Phone className="w-5 h-5 text-primary" />
                   <div>
                     <p className="font-medium">Call Us</p>
-                    <p className="text-sm text-muted-foreground">+91 7668067782</p>
+                    <p className="text-sm text-muted-foreground">+91 98765 43210</p>
                   </div>
                 </div>
                 
@@ -158,7 +158,7 @@ export function ReturnsRefundsPage({ onNavigate }: ReturnsRefundsPageProps) {
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-muted-foreground" />
-                  <span>+91 7668067782</span>
+                  <span>+91 98765 43210</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-muted-foreground" />

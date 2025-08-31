@@ -1,5 +1,5 @@
 import { HeroSection } from '../components/HeroSection';
-import { ProductsGrid } from '../components/ProductsGrid';
+import { ProductsGrid } from '../src/components/ProductsGrid';
 import { ShopByCategory } from '../components/ShopByCategory';
 import { HealthBenefits } from '../components/HealthBenefits';
 import { Testimonials } from '../components/Testimonials';

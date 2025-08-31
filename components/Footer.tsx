@@ -1,14 +1,19 @@
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Separator } from './ui/separator';
 import { Logo } from './Logo';
+import { useNewsletter } from '../hooks/useNewsletter';
 
 interface FooterProps {
   onNavigate?: (page: string) => void;
 }
 
 export function Footer({ onNavigate }: FooterProps) {
+  const { subscribe, isLoading } = useNewsletter();
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+
   const handleQuickLinkClick = (page: string) => {
     if (onNavigate) {
       onNavigate(page);
@@ -17,9 +22,17 @@ export function Footer({ onNavigate }: FooterProps) {
     }
   };
 
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = await subscribe(newsletterEmail);
+    if (success) {
+      setNewsletterEmail('');
+    }
+  };
+
   const handlePhoneClick = () => {
-    // Open WhatsApp with the phone number
-    window.open('https://wa.me/12898138506', '_blank');
+    // Open WhatsApp with new phone number
+    window.open('https://wa.me/917668067782', '_blank');
   };
 
   const handleEmailClick = () => {
@@ -27,9 +40,9 @@ export function Footer({ onNavigate }: FooterProps) {
     window.open('mailto:shop@himgirinaturals.com', '_blank');
   };
 
-  const handleMapClick = () => {
-    // Open Google Maps for Sector 31, Gurgaon
-    window.open('https://maps.google.com/?q=Sector+31,+Gurgaon,+India', '_blank');
+  const handleLocationClick = () => {
+    // Open Google Maps for Ghaziabad, India
+    window.open('https://maps.google.com/?q=Ghaziabad,+India', '_blank');
   };
 
   return (
@@ -83,7 +96,7 @@ export function Footer({ onNavigate }: FooterProps) {
               </li>
               <li>
                 <button 
-                  onClick={() => handleQuickLinkClick('home')} 
+                  onClick={() => handleQuickLinkClick('health-benefits')} 
                   className="text-background/80 hover:text-background transition-colors text-left"
                 >
                   Health Benefits
@@ -161,20 +174,33 @@ export function Footer({ onNavigate }: FooterProps) {
             <p className="text-sm text-background/80 mb-4">
               Subscribe to get special offers, health tips, and product updates.
             </p>
-            <div className="space-y-3">
+            <form onSubmit={handleNewsletterSubmit} className="space-y-3">
               <div className="flex space-x-2">
                 <Input 
+                  type="email"
                   placeholder="Enter your email" 
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
                   className="bg-background/10 border-background/20 text-background placeholder:text-background/60"
+                  required
                 />
-                <Button variant="secondary" size="sm">
-                  <Mail className="h-4 w-4" />
+                <Button 
+                  type="submit" 
+                  variant="secondary" 
+                  size="sm"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <div className="w-4 h-4 border-2 border-background/20 border-t-background rounded-full animate-spin" />
+                  ) : (
+                    <Mail className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
               <p className="text-xs text-background/60">
                 By subscribing, you agree to our privacy policy.
               </p>
-            </div>
+            </form>
           </div>
         </div>
 
@@ -188,7 +214,7 @@ export function Footer({ onNavigate }: FooterProps) {
               className="flex items-center space-x-2 text-left hover:text-background transition-colors"
             >
               <Phone className="h-4 w-4 text-background/60" />
-              <span className="text-background/80">+91 7668067782</span>
+              <span className="text-background/80">+917668067782</span>
             </button>
             <button 
               onClick={handleEmailClick}
@@ -198,11 +224,11 @@ export function Footer({ onNavigate }: FooterProps) {
               <span className="text-background/80">shop@himgirinaturals.com</span>
             </button>
             <button 
-              onClick={handleMapClick}
+              onClick={handleLocationClick}
               className="flex items-center space-x-2 text-left hover:text-background transition-colors"
             >
               <MapPin className="h-4 w-4 text-background/60" />
-              <span className="text-background/80">Sector 31, Gurgaon, India</span>
+              <span className="text-background/80">Ghaziabad, India</span>
             </button>
           </div>
         </div>

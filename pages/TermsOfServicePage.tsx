@@ -447,7 +447,7 @@ export function TermsOfServicePage() {
                 General inquiries and support
               </p>
               <Button variant="outline" size="sm">
-                +12898138506
+                +917668067782
               </Button>
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg">
@@ -459,7 +459,7 @@ export function TermsOfServicePage() {
                 Official registered address
               </p>
               <Button variant="outline" size="sm">
-                Sector 31, Gurgaon
+                Ghaziabad, India
               </Button>
             </div>
           </div>

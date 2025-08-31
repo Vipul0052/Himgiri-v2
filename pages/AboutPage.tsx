@@ -44,15 +44,16 @@ export function AboutPage() {
               </div>
             </div>
             <div className="relative">
-              <div className="aspect-square rounded-2xl overflow-hidden shadow-xl">
+              <div className="w-full h-[420px] md:h-[560px] lg:h-[680px] rounded-2xl overflow-hidden shadow-xl">
                 <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1733337336596-c8e9c0dfa944?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhc3NvcnRlZCUyMG51dHMlMjBkcmllZCUyMGZydWl0c3xlbnwxfHx8fDE3NTU0NTExOTB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                  src="https://drive.google.com/thumbnail?id=1_kvrE6YIyF3zOSo6rRnjtZUpimMtiQXS&sz=w2000"
                   alt="Himgirinaturals premium dry fruits collection"
                   className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
                 />
               </div>
               <Badge className="absolute -bottom-4 -right-4 bg-accent text-accent-foreground px-6 py-2 text-sm">
-                Est. 2020
+                Est. 2025
               </Badge>
             </div>
           </div>
@@ -135,7 +136,7 @@ export function AboutPage() {
                 <div className="h-64 bg-muted flex items-center justify-center">
                   <div className="text-center">
                     <MapPin className="w-12 h-12 text-accent mx-auto mb-2" />
-                    <p className="font-semibold">Sector 31, Gurgaon</p>
+                    <p className="font-semibold">Ghaziabad, India</p>
                     <p className="text-sm text-muted-foreground">Interactive map integration</p>
                   </div>
                 </div>
@@ -152,14 +153,14 @@ export function AboutPage() {
                       <MapPin className="w-5 h-5 text-accent" />
                       <div>
                         <p className="font-medium">Store Address</p>
-                        <p className="text-sm text-muted-foreground">Sector 31, Gurgaon, India</p>
+                        <p className="text-sm text-muted-foreground">Ghaziabad, India</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
                       <Phone className="w-5 h-5 text-accent" />
                       <div>
                         <p className="font-medium">Phone Number</p>
-                        <p className="text-sm text-muted-foreground">+91 7668067782</p>
+                        <p className="text-sm text-muted-foreground">+12898138506</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">

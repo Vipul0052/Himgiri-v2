@@ -10,7 +10,7 @@ export function ShippingInfoPage() {
       <div className="text-center mb-12">
         <h1 className="text-4xl mb-4">Shipping Information</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          We deliver fresh, premium quality dry fruits and nuts across India and internationally. 
+          We deliver fresh, premium quality dry fruits and nuts across India.
           Learn about our shipping policies, delivery times, and charges.
         </p>
       </div>
@@ -126,92 +126,6 @@ export function ShippingInfoPage() {
         </CardContent>
       </Card>
 
-      {/* International Shipping */}
-      <Card className="mb-8">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Plane className="h-6 w-6 text-primary" />
-            <CardTitle>International Shipping</CardTitle>
-          </div>
-          <CardDescription>
-            We ship to over 25 countries worldwide with customs declaration support
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-3">Shipping Zones</h3>
-              <div className="space-y-3">
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="font-medium mb-1">Zone 1 - Neighboring Countries</p>
-                  <p className="text-sm text-muted-foreground mb-2">Nepal, Bangladesh, Sri Lanka, Bhutan</p>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Delivery:</span>
-                    <Badge variant="outline">5-7 Days</Badge>
-                  </div>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="font-medium mb-1">Zone 2 - Asia Pacific</p>
-                  <p className="text-sm text-muted-foreground mb-2">Singapore, Malaysia, Thailand, Australia</p>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Delivery:</span>
-                    <Badge variant="outline">7-10 Days</Badge>
-                  </div>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="font-medium mb-1">Zone 3 - Middle East</p>
-                  <p className="text-sm text-muted-foreground mb-2">UAE, Saudi Arabia, Qatar, Kuwait</p>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Delivery:</span>
-                    <Badge variant="outline">7-12 Days</Badge>
-                  </div>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="font-medium mb-1">Zone 4 - Americas & Europe</p>
-                  <p className="text-sm text-muted-foreground mb-2">USA, UK, Canada, Germany, France</p>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Delivery:</span>
-                    <Badge variant="outline">10-14 Days</Badge>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-3">International Shipping Costs</h3>
-              <div className="space-y-3">
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Zone 1</span>
-                    <span>₹450/kg</span>
-                  </div>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Zone 2</span>
-                    <span>₹650/kg</span>
-                  </div>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Zone 3</span>
-                    <span>₹750/kg</span>
-                  </div>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Zone 4</span>
-                    <span>₹950/kg</span>
-                  </div>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-3">
-                * Minimum order value ₹2,000 for international shipping
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Packaging & Handling */}
       <Card className="mb-8">
@@ -263,10 +177,7 @@ export function ShippingInfoPage() {
                   <span>Custom Packaging</span>
                   <Badge variant="outline">3-5 days</Badge>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                  <span>International Orders</span>
-                  <Badge variant="outline">2-4 days</Badge>
-                </div>
+                {/* International orders removed */}
               </div>
             </div>
           </div>
@@ -285,8 +196,7 @@ export function ShippingInfoPage() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Delivery times may vary during festivals and peak seasons</li>
                 <li>• Rural and remote area deliveries may take additional 1-2 days</li>
-                <li>• International shipping is subject to customs clearance</li>
-                <li>• We're not responsible for customs duties and taxes</li>
+                {/* International shipping notes removed */}
                 <li>• Saturday delivery available in metro cities</li>
                 <li>• No deliveries on Sundays and public holidays</li>
               </ul>
@@ -302,7 +212,7 @@ export function ShippingInfoPage() {
               <Separator className="my-4" />
               <div className="flex items-center gap-2 text-sm">
                 <Phone className="h-4 w-4" />
-                <span>For shipping queries: +12898138506</span>
+                <span>For shipping queries: +917668067782</span>
               </div>
             </div>
           </div>
