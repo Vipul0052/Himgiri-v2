@@ -188,7 +188,7 @@ export function Footer({ onNavigate }: FooterProps) {
               className="flex items-center space-x-2 text-left hover:text-background transition-colors"
             >
               <Phone className="h-4 w-4 text-background/60" />
-              <span className="text-background/80">+12898138506</span>
+              <span className="text-background/80">+91 7668067782</span>
             </button>
             <button 
               onClick={handleEmailClick}

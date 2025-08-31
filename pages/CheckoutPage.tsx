@@ -168,7 +168,7 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
                       id="phone"
                       value={shippingInfo.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
-                      placeholder="+91 98765 43210"
+                      placeholder="+91 7668067782"
                     />
                   </div>
                 </div>

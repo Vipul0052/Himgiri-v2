@@ -159,7 +159,7 @@ export function AboutPage() {
                       <Phone className="w-5 h-5 text-accent" />
                       <div>
                         <p className="font-medium">Phone Number</p>
-                        <p className="text-sm text-muted-foreground">+12898138506</p>
+                        <p className="text-sm text-muted-foreground">+91 7668067782</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
