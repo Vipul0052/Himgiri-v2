@@ -25,10 +25,12 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
 
   const handleNavigate = (page: string) => {
+    console.log('🔍 Navigation requested to:', page);
     setCurrentPage(page);
   };
 
   const renderPage = () => {
+    console.log('🔍 Current page state:', currentPage);
     switch (currentPage) {
       case 'home':
         return <HomePage onNavigate={handleNavigate} />;
@@ -37,6 +39,7 @@ export default function App() {
       case 'about':
         return <AboutPage />;
       case 'contact':
+        console.log('🔍 Rendering ContactPage');
         return <ContactPage />;
       case 'login':
         return <LoginPage onNavigate={handleNavigate} />;
@@ -59,6 +62,7 @@ export default function App() {
       case 'terms-of-service':
         return <TermsOfServicePage />;
       default:
+        console.log('🔍 Default case - rendering HomePage');
         return <HomePage onNavigate={handleNavigate} />;
     }
   };
