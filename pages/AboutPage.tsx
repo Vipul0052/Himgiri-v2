@@ -133,7 +133,7 @@ export function AboutPage() {
             {/* Interactive Google Maps */}
             <Card className="overflow-hidden">
               <CardContent className="p-0">
-                <div className="h-64 w-full">
+                <div className="h-80 w-full">
                   <iframe
                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d224345.83923192776!2d77.06889754725782!3d28.669156699999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cf1bb41c50fdf%3A0xe6f06fd26a7798ba!2sGhaziabad%2C%20Uttar%20Pradesh!5e0!3m2!1sen!2sin!4v1703123456789!5m2!1sen!2sin"
                     width="100%"
@@ -143,7 +143,7 @@ export function AboutPage() {
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                     title="Himgiri Naturals - Ghaziabad, India"
-                    className="w-full h-full"
+                    className="w-full h-full rounded-t-lg"
                   ></iframe>
                 </div>
                 <div className="p-4 bg-muted/30">

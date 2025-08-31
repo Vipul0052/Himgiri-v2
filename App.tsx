@@ -5,6 +5,7 @@ import { CartOverlay } from './components/CartOverlay';
 import { HomePage } from './pages/HomePage';
 import { ShopPage } from './pages/ShopPage';
 import { AboutPage } from './pages/AboutPage';
+import { ContactPage } from './pages/ContactPage';
 import { LoginPage } from './pages/LoginPage';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
@@ -35,6 +36,8 @@ export default function App() {
         return <ShopPage />;
       case 'about':
         return <AboutPage />;
+      case 'contact':
+        return <ContactPage />;
       case 'login':
         return <LoginPage onNavigate={handleNavigate} />;
       case 'cart':
