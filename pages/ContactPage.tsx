@@ -1,8 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Textarea } from '../components/ui/textarea';
-import { Badge } from '../components/ui/badge';
 import { MapPin, Phone, Mail, Clock, Send, MessageSquare } from 'lucide-react';
 
 export function ContactPage() {
@@ -74,11 +72,12 @@ export function ContactPage() {
                   <label htmlFor="message" className="block text-sm font-medium mb-2">
                     Message *
                   </label>
-                  <Textarea 
+                  <textarea 
                     id="message" 
                     placeholder="Please describe your inquiry in detail..."
                     rows={5}
                     required 
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
                 
