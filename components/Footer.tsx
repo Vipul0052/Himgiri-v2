@@ -15,14 +15,10 @@ export function Footer({ onNavigate }: FooterProps) {
   const [newsletterEmail, setNewsletterEmail] = useState('');
 
   const handleQuickLinkClick = (page: string) => {
-    console.log('🔍 Footer click detected for page:', page);
     if (onNavigate) {
-      console.log('🔍 Calling onNavigate with:', page);
       onNavigate(page);
       // Scroll to top when navigating
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      console.log('🔍 onNavigate is undefined!');
     }
   };
 
