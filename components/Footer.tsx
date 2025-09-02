@@ -36,8 +36,19 @@ export function Footer({ onNavigate }: FooterProps) {
   };
 
   const handleEmailClick = () => {
-    // Open email client
-    window.location.href = 'mailto:shop@himgirinaturals.com';
+    // Open email client - try multiple methods for better compatibility
+    const email = 'shop@himgirinaturals.com';
+    const subject = 'Inquiry from Himigiri Naturals Website';
+    const body = 'Hello,\n\nI would like to inquire about your products.\n\n';
+    
+    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    // Try window.open first, fallback to window.location
+    try {
+      window.open(mailtoLink, '_self');
+    } catch (error) {
+      window.location.href = mailtoLink;
+    }
   };
 
   const handleLocationClick = () => {
@@ -208,26 +219,26 @@ export function Footer({ onNavigate }: FooterProps) {
 
         {/* Contact Info */}
         <div className="py-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm w-full">
             <button 
               onClick={handlePhoneClick}
-              className="flex items-center space-x-2 text-left hover:text-background transition-colors"
+              className="flex items-center justify-center md:justify-start space-x-2 text-left hover:text-background transition-colors w-full py-2"
             >
-              <Phone className="h-4 w-4 text-background/60" />
+              <Phone className="h-4 w-4 text-background/60 flex-shrink-0" />
               <span className="text-background/80">+917668067782</span>
             </button>
             <button 
               onClick={handleEmailClick}
-              className="flex items-center space-x-2 text-left hover:text-background transition-colors"
+              className="flex items-center justify-center md:justify-start space-x-2 text-left hover:text-background transition-colors w-full py-2"
             >
-              <Mail className="h-4 w-4 text-background/60" />
+              <Mail className="h-4 w-4 text-background/60 flex-shrink-0" />
               <span className="text-background/80">shop@himgirinaturals.com</span>
             </button>
             <button 
               onClick={handleLocationClick}
-              className="flex items-center space-x-2 text-left hover:text-background transition-colors"
+              className="flex items-center justify-center md:justify-start space-x-2 text-left hover:text-background transition-colors w-full py-2"
             >
-              <MapPin className="h-4 w-4 text-background/60" />
+              <MapPin className="h-4 w-4 text-background/60 flex-shrink-0" />
               <span className="text-background/80">Ghaziabad, India</span>
             </button>
           </div>
