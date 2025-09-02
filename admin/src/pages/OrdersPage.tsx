@@ -114,12 +114,12 @@ export function OrdersPage() {
       <ul className="space-y-3">
         {orders.map(o => (
           <li key={o.id} className="bg-white border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                   <div className="font-semibold text-lg">Order #{o.id}</div>
                   <div className="text-lg font-bold text-green-600">₹{o.amount}</div>
-                  <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                  <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm w-fit">
                     {formatDate(o.created_at)}
                   </div>
                 </div>
@@ -129,8 +129,8 @@ export function OrdersPage() {
                   {o.tracking_number && <div><strong>Tracking:</strong> {o.tracking_number}</div>}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <select value={o.status} onChange={e => updateStatus(o.id, e.target.value)} className="rounded-md border px-3 h-9">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
+                <select value={o.status} onChange={e => updateStatus(o.id, e.target.value)} className="rounded-md border px-3 h-9 w-full sm:w-auto">
                   <option value="pending">Pending</option>
                   <option value="processing">Processing</option>
                   <option value="shipped">Shipped</option>
@@ -139,13 +139,13 @@ export function OrdersPage() {
                 </select>
                 <button 
                   onClick={() => openOrderDetails(o)}
-                  className="px-3 h-9 rounded-md border hover:bg-gray-50"
+                  className="px-3 h-9 rounded-md border hover:bg-gray-50 w-full sm:w-auto"
                 >
                   View Details
                 </button>
                 <button 
                   onClick={() => generateInvoice(o.id)}
-                  className="px-3 h-9 rounded-md border bg-green-100 hover:bg-green-200"
+                  className="px-3 h-9 rounded-md border bg-green-100 hover:bg-green-200 w-full sm:w-auto"
                 >
                   📄 Invoice
                 </button>
@@ -156,24 +156,24 @@ export function OrdersPage() {
       </ul>
 
       {showOrderDetails && selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Order #{selectedOrder.id} Details</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[95vh] overflow-y-auto mx-2">
+            <div className="p-3 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Order #{selectedOrder.id} Details</h2>
                 <button
                   onClick={() => setShowOrderDetails(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 p-1"
                 >
-                  <X className="h-6 w-6" />
+                  <X className="h-5 w-5 sm:h-6 sm:w-6" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
                 {/* Customer Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Customer Information</h3>
-                  <div className="space-y-3">
+                <div className="space-y-3 sm:space-y-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 border-b pb-2">Customer Information</h3>
+                  <div className="space-y-2 sm:space-y-3">
                     <div>
                       <span className="font-medium text-gray-700">Name:</span>
                       <span className="ml-2 text-gray-900">{selectedOrder.name || '—'}</span>
@@ -192,9 +192,9 @@ export function OrdersPage() {
                 </div>
 
                 {/* Order Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Order Information</h3>
-                  <div className="space-y-3">
+                <div className="space-y-3 sm:space-y-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 border-b pb-2">Order Information</h3>
+                  <div className="space-y-2 sm:space-y-3">
                     <div>
                       <span className="font-medium text-gray-700">Order Date:</span>
                       <span className="ml-2 text-gray-900">
@@ -223,10 +223,10 @@ export function OrdersPage() {
 
               {/* Shipping Address */}
               {selectedOrder.shipping && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">Shipping Address</h3>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="space-y-2">
+                <div className="mt-6 sm:mt-8">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 border-b pb-2 mb-3 sm:mb-4">Shipping Address</h3>
+                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                    <div className="space-y-1 sm:space-y-2">
                       <div className="font-medium text-gray-900">
                         {selectedOrder.shipping.fullName || selectedOrder.shipping.full_name || selectedOrder.name}
                       </div>
@@ -244,45 +244,45 @@ export function OrdersPage() {
               )}
 
               {/* Order Items */}
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">Order Items</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-gray-200">
+              <div className="mt-6 sm:mt-8">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 border-b pb-2 mb-3 sm:mb-4">Order Items</h3>
+                <div className="overflow-x-auto -mx-3 sm:mx-0">
+                  <table className="w-full border-collapse border border-gray-200 min-w-full">
                     <thead>
                       <tr className="bg-gray-50">
-                        <th className="border border-gray-200 px-4 py-3 text-left font-medium text-gray-700">Product</th>
-                        <th className="border border-gray-200 px-4 py-3 text-left font-medium text-gray-700">Price</th>
-                        <th className="border border-gray-200 px-4 py-3 text-left font-medium text-gray-700">Qty</th>
-                        <th className="border border-gray-200 px-4 py-3 text-left font-medium text-gray-700">Total</th>
+                        <th className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-left font-medium text-gray-700 text-sm">Product</th>
+                        <th className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-left font-medium text-gray-700 text-sm">Price</th>
+                        <th className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-left font-medium text-gray-700 text-sm">Qty</th>
+                        <th className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-left font-medium text-gray-700 text-sm">Total</th>
                       </tr>
                     </thead>
                     <tbody>
                       {selectedOrder.items && Array.isArray(selectedOrder.items) ? (
                         selectedOrder.items.map((item: any, index: number) => (
                           <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                            <td className="border border-gray-200 px-4 py-3">
+                            <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3">
                               <div>
-                                <div className="font-medium text-gray-900">{item.name}</div>
-                                <div className="text-sm text-gray-500">ID: {item.id}</div>
+                                <div className="font-medium text-gray-900 text-sm">{item.name}</div>
+                                <div className="text-xs text-gray-500">ID: {item.id}</div>
                               </div>
                             </td>
-                            <td className="border border-gray-200 px-4 py-3 text-gray-900">₹{item.price}</td>
-                            <td className="border border-gray-200 px-4 py-3 text-gray-900">{item.quantity}</td>
-                            <td className="border border-gray-200 px-4 py-3 text-gray-900">₹{item.price * item.quantity}</td>
+                            <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-gray-900 text-sm">₹{item.price}</td>
+                            <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-gray-900 text-sm">{item.quantity}</td>
+                            <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-gray-900 text-sm">₹{item.price * item.quantity}</td>
                           </tr>
                         ))
                       ) : (
                         // If no items array, show the order as a single item
                         <tr className="bg-white">
-                          <td className="border border-gray-200 px-4 py-3">
+                          <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3">
                             <div>
-                              <div className="font-medium text-gray-900">Product</div>
-                              <div className="text-sm text-gray-500">Order #{selectedOrder.id}</div>
+                              <div className="font-medium text-gray-900 text-sm">Product</div>
+                              <div className="text-xs text-gray-500">Order #{selectedOrder.id}</div>
                             </div>
                           </td>
-                          <td className="border border-gray-200 px-4 py-3 text-gray-900">₹{selectedOrder.amount}</td>
-                          <td className="border border-gray-200 px-4 py-3 text-gray-900">1</td>
-                          <td className="border border-gray-200 px-4 py-3 text-gray-900">₹{selectedOrder.amount}</td>
+                          <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-gray-900 text-sm">₹{selectedOrder.amount}</td>
+                          <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-gray-900 text-sm">1</td>
+                          <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-gray-900 text-sm">₹{selectedOrder.amount}</td>
                         </tr>
                       )}
                     </tbody>
@@ -290,9 +290,9 @@ export function OrdersPage() {
                 </div>
 
                 {/* Order Totals */}
-                <div className="mt-6 flex justify-end">
-                  <div className="w-64 space-y-2">
-                    <div className="flex justify-between text-lg font-semibold border-t pt-2">
+                <div className="mt-4 sm:mt-6 flex justify-end">
+                  <div className="w-full sm:w-64 space-y-2">
+                    <div className="flex justify-between text-base sm:text-lg font-semibold border-t pt-2">
                       <span className="text-gray-900">Total Amount:</span>
                       <span className="text-gray-900">₹{selectedOrder.amount}</span>
                     </div>
@@ -301,16 +301,16 @@ export function OrdersPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-8 flex justify-end space-x-3">
+              <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                 <button
                   onClick={() => generateInvoice(selectedOrder.id)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                  className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm sm:text-base w-full sm:w-auto"
                 >
                   📄 Generate Invoice
                 </button>
                 <button
                   onClick={() => setShowOrderDetails(false)}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                  className="px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm sm:text-base w-full sm:w-auto"
                 >
                   Close
                 </button>
