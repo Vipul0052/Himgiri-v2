@@ -37,7 +37,7 @@ export function Footer({ onNavigate }: FooterProps) {
 
   const handleEmailClick = () => {
     // Open email client
-    window.open('mailto:shop@himgirinaturals.com', '_blank');
+    window.location.href = 'mailto:shop@himgirinaturals.com';
   };
 
   const handleLocationClick = () => {
