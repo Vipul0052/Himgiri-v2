@@ -253,3 +253,4 @@ Security:
 - Admin auth uses HTTP-only JWT cookie (SameSite=Strict) scoped to admin host
 - Admin API verifies `Host` starts with `admin.`
 - Main site does not bundle or route any admin code
+# Reverted to original state
