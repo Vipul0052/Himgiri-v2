@@ -11,20 +11,22 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
   const [imageError, setImageError] = useState(false);
   const [showHighRes, setShowHighRes] = useState(false);
 
-  // Preload the hero image
   useEffect(() => {
     const img = new Image();
+
     img.onload = () => setImageLoaded(true);
     img.onerror = () => setImageError(true);
-    // Start with smaller thumbnail for faster loading
-    img.src = "https://drive.google.com/file/d/1TeZsPvxpZakoG4D8R-ZMTZZwSNQyWbeG/view?usp=sharing=w800";
-    
+
+    // ✅ Correct Google Drive thumbnail URL
+    img.src =
+      "https://drive.google.com/thumbnail?id=1TeZsPvxpZakoG4D8R-ZMTZZwSNQyWbeG&sz=w800";
+
     // Load high-res version after initial load
     const highResImg = new Image();
     highResImg.onload = () => setShowHighRes(true);
-    highResImg.src = "https://drive.google.com/file/d/1TeZsPvxpZakoG4D8R-ZMTZZwSNQyWbeG/view?usp=sharing=w2000";
+    highResImg.src =
+      "https://drive.google.com/thumbnail?id=1TeZsPvxpZakoG4D8R-ZMTZZwSNQyWbeG&sz=w2000";
   }, []);
-
   return (
     <section className="relative py-20 px-4 bg-gradient-to-br from-background to-muted overflow-hidden">
       <div className="container mx-auto">
