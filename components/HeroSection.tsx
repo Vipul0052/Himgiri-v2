@@ -17,12 +17,12 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
     img.onload = () => setImageLoaded(true);
     img.onerror = () => setImageError(true);
     // Start with smaller thumbnail for faster loading
-    img.src = "https://drive.google.com/thumbnail?id=1_kvrE6YIyF3zOSo6rRnjtZUpimMtiQXS&sz=w800";
+    img.src = "https://drive.google.com/file/d/1TeZsPvxpZakoG4D8R-ZMTZZwSNQyWbeG/view?usp=sharing=w800";
     
     // Load high-res version after initial load
     const highResImg = new Image();
     highResImg.onload = () => setShowHighRes(true);
-    highResImg.src = "https://drive.google.com/thumbnail?id=1_kvrE6YIyF3zOSo6rRnjtZUpimMtiQXS&sz=w2000";
+    highResImg.src = "https://drive.google.com/file/d/1TeZsPvxpZakoG4D8R-ZMTZZwSNQyWbeG/view?usp=sharing=w2000";
   }, []);
 
   return (
